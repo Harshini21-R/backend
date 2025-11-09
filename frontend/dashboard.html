@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📚 Dashboard - Readify</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header>
+    <h1>📚 Readify Dashboard</h1>
+
+    <nav>
+      <a href="reviews.html">Reviews</a>
+      <a href="ratings.html">Ratings</a>
+      <a href="history.html">History</a>
+      <button id="logoutBtn" class="btn">Logout</button>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Available Books</h2>
+    <div id="bookList" class="grid"></div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "login.html";
+
+    const bookList = document.getElementById("bookList");
+
+    // ✅ Remove duplicate books
+    function removeDuplicates(books) {
+      const seen = new Set();
+      return books.filter((b) => {
+        if (seen.has(b.title)) return false;
+        seen.add(b.title);
+        return true;
+      });
+    }
+
+    async function loadBooks() {
+      try {
+        const res = await fetch("http://localhost:5000/api/books", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        let books = await res.json();
+        books = removeDuplicates(books);
+
+        bookList.innerHTML = books.length
+          ? books
+              .map(
+                (b) => `
+            <div class="card">
+              <h3>${b.title}</h3>
+              <p>${b.authors?.length ? b.authors.join(", ") : "Unknown Author"}</p>
+              <p>${b.description || ""}</p>
+              <p>⭐ ${
+                b.averageRating ? b.averageRating.toFixed(1) : "No ratings"
+              } (${b.ratingsCount || 0} ratings)</p>
+
+              <button onclick="openReader('${b._id}')">Read</button>
+            </div>
+          `
+              )
+              .join("")
+          : "<p>No books available.</p>";
+      } catch (err) {
+        console.error(err);
+        alert("Error loading books");
+      }
+    }
+
+    function openReader(id) {
+      localStorage.setItem("bookId", id);
+      window.location.href = "reader.html";
+    }
+
+    // ✅ Logout
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "login.html";
+    });
+
+    loadBooks();
+  </script>
+</body>
+</html>
