@@ -16,8 +16,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     if (res.ok) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      alert('✅ Login successful!');
-      window.location.href = 'dashboard.html';
+
+      // 🔥 ROLE-BASED REDIRECTION
+      if (data.user.role === "admin") {
+        alert("Welcome Admin!");
+        window.location.href = "admin.html";
+      } else {
+        window.location.href = "dashboard.html";
+      }
     } else {
       alert(`❌ ${data.message || 'Login failed'}`);
     }
