@@ -1,6 +1,6 @@
 // ✅ history.js
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api";
 const token = localStorage.getItem("token");
 
 // Redirect to login if not logged in

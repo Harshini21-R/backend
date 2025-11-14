@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   =============================== */
   async function loadBooks() {
     try {
-      const res = await fetch("http://localhost:5000/api/books", {
+      const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const books = await res.json();
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pdfUrl: pdfUrl.value,
       };
 
-      await fetch("http://localhost:5000/api/books", {
+      await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.deleteBook = async function (id) {
     if (!confirm("Delete this book?")) return;
 
-    await fetch(`http://localhost:5000/api/books/${id}`, {
+    await fetch(`https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .value.split(",")
       .map((x) => x.trim());
 
-    await fetch(`http://localhost:5000/api/books/${id}`, {
+    await fetch(`https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

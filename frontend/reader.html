@@ -126,7 +126,7 @@
       pageNumPending = null;
 
     async function getPdfUrl() {
-      const res = await fetch(`http://localhost:5000/api/books/${bookId}`, {
+      const res = await fetch(`https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books/${bookId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const book = await res.json();
@@ -135,12 +135,12 @@
         return path ? path.split("/").pop() : "";
       }
 
-      return book.pdfUrl ? `http://localhost:5000/pdfs/${getFilename(book.pdfUrl)}` : "";
+      return book.pdfUrl ? `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/pdfs/${getFilename(book.pdfUrl)}` : "";
     }
 
     // ✅ MARK BOOK AS READ
     async function markAsRead() {
-      await fetch("http://localhost:5000/api/history", {
+      await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/history", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -156,7 +156,7 @@
 
       if (!rating) return alert("Enter rating");
 
-      const res = await fetch("http://localhost:5000/api/ratings", {
+      const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/ratings", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -175,7 +175,7 @@
 
       if (!comment) return alert("Enter review comment");
 
-      const res = await fetch("http://localhost:5000/api/reviews", {
+      const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/reviews", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

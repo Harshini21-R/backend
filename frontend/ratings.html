@@ -23,7 +23,7 @@
     if (!token) window.location.href = "login.html";
 
     async function loadRatings() {
-      const res = await fetch("http://localhost:5000/api/ratings");
+      const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/ratings");
       const data = await res.json();
 
       const container = document.getElementById("ratingsList");
