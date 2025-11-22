@@ -23,4 +23,4 @@ dist/
 Thumbs.db
 
 # Uploads (optional)
-backend/uploads/pdfs/
+# (Removed backend/uploads/pdfs/ so PDFs will be uploaded)
