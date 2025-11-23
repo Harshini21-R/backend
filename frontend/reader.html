@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reader - Readify</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- pdf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
   <style>
-    /* --- Dictionary popup --- */
+    /* Dictionary popup */
     .dictionary-box {
       position: fixed;
       bottom: 20px;
@@ -27,124 +26,80 @@
     .close-dict { float: right; cursor: pointer; font-size: 18px; }
     .dict-input { width: 100%; padding: 8px; border-radius: 6px; border: none; margin-top: 10px; margin-bottom: 10px; }
 
-    /* --- PDF wrapper (text-only) --- */
-    .pdf-wrapper { position: relative; padding: 18px; }
+    /* PDF wrapper */
+    .pdf-wrapper { position: relative; }
 
-    /* Hide canvas if present; we don't use it in this text-only mode */
+    /* Hide canvas completely */
     #pdfViewer { display: none !important; }
 
-    /* Each PDF page container */
-    .pdf-page {
-      background: #fff;
-      margin-bottom: 32px;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-      color: #111;
-      font-family: Georgia, "Times New Roman", serif;
-      line-height: 1.55;
-    }
-
-    .pdf-page-header {
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: #333;
-    }
-
-    /* textLayer content inside page; keep natural flow */
+    /* Text-only rendering */
     .textLayer {
-      display: block;
-      white-space: normal;
-      font-size: 16px;
-      color: inherit;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
       user-select: text;
-      -webkit-user-select: text;
+      line-height: 1.3;
+      padding: 12px;
+      background: transparent;
+      color: #111;
+      font-family: serif;
     }
 
-    .textLine {
+    .textLayer span {
+      position: static !important;
+      transform: none !important;
+      white-space: normal !important;
       display: block;
-      margin-bottom: 6px;
+      opacity: 1 !important;
     }
 
-    /* controls + rating area */
-    .controls {
-      display:flex;
-      gap:10px;
-      align-items:center;
-      margin: 10px 18px;
+    /* Page wrapper */
+    .pdf-page {
+      margin-bottom: 28px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
     }
-    .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; background:#2a6df6; color:white; }
-    .back-btn { background:#444; }
-    .reader-btn { padding:10px 14px; border-radius:20px; border:none; cursor:pointer; background:linear-gradient(to right,#009ffd,#2a2a72); color:white; }
-
-    .rating-review-container {
-      width: 90%;
-      margin: 25px auto 60px;
-      background: rgba(255,255,255,0.02);
-      border-radius: 14px;
-      padding: 18px;
-      text-align: left;
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .rating-input { width:70px; padding:8px; border-radius:6px; border:none; }
-    textarea { width:100%; min-height:100px; padding:10px; border-radius:8px; border:none; resize:vertical; }
-
-    .page-focus {
-      outline: 3px solid rgba(0,150,255,0.08);
-      transition: outline 200ms ease;
-    }
-
-    /* page number area */
-    .page-num { font-weight:600; color:#333; }
   </style>
 </head>
+
 <body>
-  <header class="reader-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
-    <div style="display:flex; gap:12px; align-items:center;">
-      <button onclick="window.location.href='dashboard.html'" class="btn back-btn">⬅ Back</button>
-      <h1 style="margin:0;">📖 Reader</h1>
-    </div>
-    <div class="page-num" id="pageNum">Page 1</div>
+  <header class="reader-header">
+    <h1>📖 Reader</h1>
+    <button onclick="window.location.href='dashboard.html'" class="btn back-btn">⬅ Back</button>
   </header>
 
   <main class="reader-main">
 
-    <div class="controls" style="margin-bottom:10px;">
-      <button id="prevBtn" class="btn">Previous</button>
-      <button id="nextBtn" class="btn">Next</button>
-      <div style="flex:1"></div>
-      <div style="color:#666;font-size:14px">Tip: Double-click a word to see dictionary</div>
+    <!-- Navigation -->
+    <div class="controls">
+      <button id="prevBtn" class="btn nav-btn">Previous</button>
+      <button id="nextBtn" class="btn nav-btn">Next</button>
+      <span id="pageNum" class="page-num"></span>
     </div>
 
+    <!-- PDF renderer -->
     <div class="pdf-wrapper">
-      <!-- hidden canvas (not used) -->
       <canvas id="pdfViewer"></canvas>
-
-      <!-- pagesContainer: will contain one .pdf-page per PDF page -->
       <div id="pagesContainer"></div>
     </div>
 
-    <!-- RATING + REVIEW -->
-    <div class="rating-review-container" style="margin-top:20px;">
-      <div class="rating-section" style="margin-bottom:14px;">
-        <div class="section-title" style="font-weight:700;color:#fff;margin-bottom:6px">⭐ Rate this Book</div>
+    <!-- Rating + Review -->
+    <div class="rating-review-container">
+      <div class="rating-section">
+        <div class="section-title">⭐ Rate this Book</div>
         <input id="ratingInput" class="rating-input" type="number" min="1" max="5" placeholder="1–5" />
         <button class="reader-btn" onclick="submitRating()">Submit Rating</button>
       </div>
 
       <div class="review-section">
-        <div class="section-title" style="font-weight:700;color:#fff;margin-bottom:6px;">✍ Write a Review</div>
+        <div class="section-title">✍ Write a Review</div>
         <textarea id="reviewInput" placeholder="Write your thoughts here..."></textarea>
-        <div style="margin-top:8px;">
-          <button class="reader-btn" onclick="submitReview()">Submit Review</button>
-        </div>
+        <button class="reader-btn" onclick="submitReview()">Submit Review</button>
       </div>
     </div>
   </main>
 
-  <!-- DICTIONARY POPUP -->
+  <!-- Dictionary -->
   <div id="dictionaryBox" class="dictionary-box">
     <span class="close-dict" onclick="closeDictionary()">✖</span>
     <div class="dict-title">📘 Dictionary</div>
@@ -153,255 +108,203 @@
     <p id="dictMeaning" style="margin-top:10px;"></p>
   </div>
 
-  <script>
-    const token = localStorage.getItem("token");
-    const bookId = localStorage.getItem("bookId");
-    if (!token || !bookId) {
-      // If you want to test locally with the uploaded tech.pdf, don't redirect:
-      // window.location.href = "dashboard.html";
-    }
+<script>
+  const token = localStorage.getItem("token");
+  const bookId = localStorage.getItem("bookId");
 
-    // IMPORTANT: fallback local uploaded file (for dev/testing)
-    // The file you uploaded earlier is at: /mnt/data/tech.pdf
-    // (When deploying, your API will provide book.pdfUrl; this fallback is only for local tests.)
-    const LOCAL_UPLOADED_PDF_PATH = "/mnt/data/tech.pdf";
+  if (!token || !bookId) window.location.href = "dashboard.html";
 
-    let pdfDoc = null;
-    let currentPage = 1;
+  let pdfDoc = null;
+  let currentPage = 1;
 
-    async function getPdfUrl() {
-      try {
-        if (!bookId) {
-          // Development fallback: use the uploaded file path
-          return LOCAL_UPLOADED_PDF_PATH;
+  async function getPdfUrl() {
+    const res = await fetch(
+      `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books/${bookId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const book = await res.json();
+    function getFilename(path) { return path ? path.split("/").pop() : ""; }
+    return book.pdfUrl
+      ? `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/pdfs/${getFilename(book.pdfUrl)}`
+      : "";
+  }
+
+  async function markAsRead() {
+    await fetch(
+      "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/history",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bookId }),
+      }
+    );
+  }
+
+  async function submitRating() {
+    const rating = document.getElementById("ratingInput").value;
+    if (!rating) return alert("Enter rating");
+    const res = await fetch(
+      "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/ratings",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId, rating }),
+      }
+    );
+    alert(res.ok ? "✅ Rating submitted" : "❌ Rating failed");
+  }
+
+  async function submitReview() {
+    const comment = document.getElementById("reviewInput").value;
+    if (!comment) return alert("Enter review");
+    const res = await fetch(
+      "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/reviews",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId, comment }),
+      }
+    );
+    alert(res.ok ? "✅ Review submitted" : "❌ Review failed");
+  }
+
+  /* ---------------- PAGE RENDERER ---------------- */
+
+  async function renderAllPagesTextOnly(pdf) {
+    const pagesContainer = document.getElementById("pagesContainer");
+    pagesContainer.innerHTML = "";
+
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+
+      const pageDiv = document.createElement("div");
+      pageDiv.className = "pdf-page";
+      pageDiv.dataset.pageNumber = p;
+
+      if (p !== 1) pageDiv.style.display = "none";
+
+      const header = document.createElement("div");
+      header.style.fontWeight = "600";
+      header.style.marginBottom = "8px";
+      header.textContent = `Page ${p}`;
+      pageDiv.appendChild(header);
+
+      const textLayer = document.createElement("div");
+      textLayer.className = "textLayer";
+      pageDiv.appendChild(textLayer);
+
+      const textContent = await page.getTextContent();
+      const items = textContent.items || [];
+
+      let line = "";
+      const paragraph = document.createElement("div");
+      paragraph.style.marginBottom = "8px";
+
+      items.forEach((it, idx) => {
+        line += (it.str || "") + " ";
+        if (idx % 18 === 0 && idx !== 0) {
+          const span = document.createElement("span");
+          span.textContent = line.trim();
+          paragraph.appendChild(span);
+          paragraph.appendChild(document.createElement("br"));
+          line = "";
         }
-        const res = await fetch(`https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books/${bookId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          console.warn("book API returned", res.status);
-          return LOCAL_UPLOADED_PDF_PATH; // fallback
-        }
-        const book = await res.json();
-        function getFilename(path){ return path ? path.split("/").pop() : ""; }
-        if (book.pdfUrl) {
-          // Backend serves PDFs under /pdfs/<filename>
-          return `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/pdfs/${getFilename(book.pdfUrl)}`;
-        } else {
-          return LOCAL_UPLOADED_PDF_PATH;
-        }
-      } catch (err) {
-        console.error("getPdfUrl err", err);
-        return LOCAL_UPLOADED_PDF_PATH;
-      }
-    }
+      });
 
-    async function markAsRead() {
-      if (!token) return;
-      try {
-        await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ bookId }),
-        });
-      } catch (e) { /* ignore */ }
-    }
-
-    async function submitRating() {
-      const rating = document.getElementById("ratingInput").value;
-      if (!rating) return alert("Enter rating");
-      try {
-        const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/ratings", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ bookId, rating }),
-        });
-        alert(res.ok ? "✅ Rating submitted" : "❌ Rating failed");
-      } catch {
-        alert("❌ Rating failed (network)");
-      }
-    }
-
-    async function submitReview() {
-      const comment = document.getElementById("reviewInput").value;
-      if (!comment) return alert("Enter review comment");
-      try {
-        const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/reviews", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ bookId, comment }),
-        });
-        alert(res.ok ? "✅ Review submitted" : "❌ Review failed");
-      } catch {
-        alert("❌ Review failed (network)");
-      }
-    }
-
-    /* ====== Render text-only pages, preserving page separation and lines ====== */
-    function createLineFromItems(items) {
-      // items: array of text items with transform
-      // We'll group by approximate Y coordinate to make lines.
-      const lines = [];
-      let currentLine = { y: null, text: [] };
-
-      for (const it of items) {
-        // transform[5] is the y coordinate (PDF coordinate system)
-        // Use Math.round to normalize, and threshold to decide new line
-        const y = Math.round(it.transform[5]);
-        if (currentLine.y === null) {
-          currentLine.y = y;
-          currentLine.text.push(it.str);
-        } else {
-          // if vertical gap is significant, start a new line
-          if (Math.abs(y - currentLine.y) > 6) {
-            lines.push(currentLine.text.join(' '));
-            currentLine = { y: y, text: [it.str] };
-          } else {
-            currentLine.text.push(it.str);
-          }
-        }
-      }
-      if (currentLine.text.length) lines.push(currentLine.text.join(' '));
-      return lines;
-    }
-
-    async function renderAllPagesTextOnly(pdf) {
-      const pagesContainer = document.getElementById('pagesContainer');
-      pagesContainer.innerHTML = '';
-
-      for (let p = 1; p <= pdf.numPages; p++) {
-        const page = await pdf.getPage(p);
-
-        // Create page wrapper
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'pdf-page';
-        pageDiv.dataset.pageNumber = p;
-
-        // header
-        const header = document.createElement('div');
-        header.className = 'pdf-page-header';
-        header.textContent = `Page ${p}`;
-        pageDiv.appendChild(header);
-
-        // text container
-        const textLayer = document.createElement('div');
-        textLayer.className = 'textLayer';
-        pageDiv.appendChild(textLayer);
-
-        // get text content
-        const textContent = await page.getTextContent();
-        const items = textContent.items || [];
-
-        // Group items into lines using Y coordinate
-        const lines = createLineFromItems(items);
-
-        // Build DOM: each line in its own block. Also group consecutive short lines into paragraphs.
-        let paragraph = document.createElement('div');
-        paragraph.style.marginBottom = '10px';
-        paragraph.style.textAlign = 'justify';
-
-        let shortLineStreak = 0;
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-
-          const span = document.createElement('span');
-          span.className = 'textLine';
-          span.textContent = line;
-
-          // Heuristic to detect paragraph breaks: if current line ends with punctuation or is long, break paragraph
-          const isLong = line.length > 60;
-          const endsWithPeriod = /[.\?!]$/.test(line);
-          if (isLong || endsWithPeriod || shortLineStreak >= 3) {
-            // append current paragraph + start new one
-            paragraph.appendChild(span);
-            textLayer.appendChild(paragraph);
-            paragraph = document.createElement('div');
-            paragraph.style.marginBottom = '10px';
-            paragraph.style.textAlign = 'justify';
-            shortLineStreak = 0;
-          } else {
-            paragraph.appendChild(span);
-            shortLineStreak++;
-          }
-        }
-
-        // append remaining paragraph
-        if (paragraph.childElementCount > 0) textLayer.appendChild(paragraph);
-
-        pagesContainer.appendChild(pageDiv);
+      if (line.trim()) {
+        const span = document.createElement("span");
+        span.textContent = line.trim();
+        paragraph.appendChild(span);
       }
 
-      // update page info
-      document.getElementById('pageNum').textContent = `Page ${currentPage} of ${pdf.numPages}`;
+      textLayer.appendChild(paragraph);
+      pagesContainer.appendChild(pageDiv);
     }
 
-    /* ===== Navigation (scroll to page) ===== */
-    function gotoPage(n) {
-      const pages = document.querySelectorAll('.pdf-page');
-      if (!pages.length) return;
-      if (n < 1) n = 1;
-      if (n > pages.length) n = pages.length;
-      currentPage = n;
-      document.getElementById('pageNum').textContent = `Page ${currentPage} of ${pages.length}`;
+    document.getElementById("pageNum").textContent =
+      `Page ${currentPage} of ${pdf.numPages}`;
+  }
 
-      const target = document.querySelector(`.pdf-page[data-page-number="${n}"]`);
-      if (target) {
-        // smooth scroll and briefly highlight
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        target.classList.add('page-focus');
-        setTimeout(() => target.classList.remove('page-focus'), 900);
-      }
+  function gotoPage(n) {
+    const pages = document.querySelectorAll(".pdf-page");
+    if (!pages.length) return;
+
+    if (n < 1 || n > pages.length) return;
+
+    pages.forEach(pg => (pg.style.display = "none"));
+
+    const target = document.querySelector(`.pdf-page[data-page-number="${n}"]`);
+    if (target) target.style.display = "block";
+
+    currentPage = n;
+    document.getElementById("pageNum").textContent =
+      `Page ${currentPage} of ${pages.length}`;
+  }
+
+  document.getElementById("nextBtn").addEventListener("click", () =>
+    gotoPage(currentPage + 1)
+  );
+
+  document.getElementById("prevBtn").addEventListener("click", () =>
+    gotoPage(currentPage - 1)
+  );
+
+  getPdfUrl().then((url) => {
+    if (!url) {
+      document.querySelector(".pdf-wrapper").innerHTML = "<p>PDF not found</p>";
+      return;
     }
 
-    document.getElementById('nextBtn').addEventListener('click', () => gotoPage(currentPage + 1));
-    document.getElementById('prevBtn').addEventListener('click', () => gotoPage(currentPage - 1));
-
-    /* ===== Load PDF and render ===== */
-    getPdfUrl().then(async (url) => {
-      if (!url) {
-        document.querySelector('.pdf-wrapper').innerHTML = '<p>PDF not found</p>';
-        return;
-      }
-      markAsRead();
-      try {
-        const loadingTask = pdfjsLib.getDocument(url);
-        const pdf = await loadingTask.promise;
+    markAsRead();
+    pdfjsLib.getDocument(url).promise
+      .then(async (pdf) => {
         pdfDoc = pdf;
-        currentPage = 1;
         await renderAllPagesTextOnly(pdf);
         gotoPage(1);
-      } catch (err) {
-        document.querySelector('.pdf-wrapper').innerHTML = `<p>Load error: ${err.message}</p>`;
-      }
-    });
+      })
+      .catch((err) => {
+        document.querySelector(".pdf-wrapper").innerHTML =
+          `<p>Load error: ${err.message}</p>`;
+      });
+  });
 
-    /* ===== Dictionary logic (double-click) ===== */
-    document.addEventListener('dblclick', () => {
-      const word = window.getSelection().toString().trim();
-      if (word && /^[A-Za-z]+$/.test(word)) openDictionary(word);
-    });
+  /* ---------------- DICTIONARY ---------------- */
 
-    function openDictionary(word) {
-      document.getElementById('dictionaryBox').style.display = 'block';
-      document.getElementById('dictSearch').value = word;
-      searchWord();
+  document.addEventListener("dblclick", () => {
+    const word = window.getSelection().toString().trim();
+    if (word && /^[A-Za-z]+$/.test(word)) openDictionary(word);
+  });
+
+  function openDictionary(word) {
+    document.getElementById("dictionaryBox").style.display = "block";
+    document.getElementById("dictSearch").value = word;
+    searchWord();
+  }
+
+  function closeDictionary() {
+    document.getElementById("dictionaryBox").style.display = "none";
+  }
+
+  async function searchWord() {
+    const word = document.getElementById("dictSearch").value.trim();
+    if (!word) return;
+
+    const box = document.getElementById("dictMeaning");
+    box.textContent = "Loading...";
+
+    try {
+      const res = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
+      );
+      const data = await res.json();
+      box.textContent =
+        data[0]?.meanings[0]?.definitions[0]?.definition ||
+        "No meaning found.";
+    } catch {
+      box.textContent = "Error fetching meaning.";
     }
-    function closeDictionary() { document.getElementById('dictionaryBox').style.display = 'none'; }
+  }
+</script>
 
-    async function searchWord() {
-      const word = document.getElementById('dictSearch').value.trim();
-      if (!word) return;
-      const meaningBox = document.getElementById('dictMeaning');
-      meaningBox.textContent = 'Loading...';
-      try {
-        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-        const data = await res.json();
-        meaningBox.textContent = data[0]?.meanings[0]?.definitions[0]?.definition || 'No meaning found.';
-      } catch {
-        meaningBox.textContent = 'Error fetching meaning.';
-      }
-    }
-  </script>
 </body>
 </html>
