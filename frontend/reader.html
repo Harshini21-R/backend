@@ -9,8 +9,6 @@
 
   <!-- 🔥 DICTIONARY POPUP STYLE -->
   <style>
-    /* Your existing CSS is kept exactly the same */
-
     .dictionary-box {
       position: fixed;
       bottom: 20px;
@@ -24,19 +22,16 @@
       z-index: 9999;
       box-shadow: 0 0 10px rgba(255,255,255,0.2);
     }
-
     .dict-title {
       font-size: 20px;
       font-weight: bold;
       margin-bottom: 8px;
     }
-
     .close-dict {
       float: right;
       cursor: pointer;
       font-size: 18px;
     }
-
     .dict-input {
       width: 100%;
       padding: 8px;
@@ -44,6 +39,19 @@
       border: none;
       margin-top: 10px;
       margin-bottom: 10px;
+    }
+    /* pdf.js text layer */
+    .textLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: transparent;
+    }
+    .textLayer span {
+      position: absolute;
+      white-space: pre;
+      transform-origin: 0% 0%;
+      cursor: text;
     }
   </style>
 </head>
@@ -63,11 +71,13 @@
       <span id="pageNum" class="page-num"></span>
     </div>
 
-    <div class="pdf-wrapper">
+    <!-- 🔥 UPDATED PDF WRAPPER (added textLayer) -->
+    <div class="pdf-wrapper" style="position:relative;">
       <canvas id="pdfViewer"></canvas>
+      <div id="textLayer" class="textLayer"></div>
     </div>
 
-    <!-- ⭐ RATING + REVIEW BOX (your existing code kept same) -->
+    <!-- ⭐ RATING + REVIEW BOX (your original code) -->
     <div class="rating-review-container">
       <div class="rating-section">
         <div class="section-title">⭐ Rate this Book</div>
@@ -83,7 +93,6 @@
     </div>
   </main>
 
-
   <!-- 🔥 DICTIONARY POPUP BOX -->
   <div id="dictionaryBox" class="dictionary-box">
     <span class="close-dict" onclick="closeDictionary()">✖</span>
@@ -92,7 +101,6 @@
     <button class="reader-btn" onclick="searchWord()">Search</button>
     <p id="dictMeaning" style="margin-top:10px;"></p>
   </div>
-
 
   <script>
     const token = localStorage.getItem("token");
@@ -115,13 +123,18 @@
         return path ? path.split("/").pop() : "";
       }
 
-      return book.pdfUrl ? `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/pdfs/${getFilename(book.pdfUrl)}` : "";
+      return book.pdfUrl
+        ? `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/pdfs/${getFilename(book.pdfUrl)}`
+        : "";
     }
 
     async function markAsRead() {
       await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/history", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ bookId }),
       });
     }
@@ -152,27 +165,48 @@
       alert(res.ok ? "✅ Review submitted" : "❌ Review failed");
     }
 
-    // PDF RENDERING
+    /* ----------------------------------------------------
+       🔥 FULLY UPDATED renderPage() WITH TEXT LAYER
+    ---------------------------------------------------- */
     function renderPage(num) {
       pageRendering = true;
-      pdfDoc.getPage(num).then(function (page) {
-        const viewport = page.getViewport({ scale: 1.1 });
+
+      pdfDoc.getPage(num).then(async function (page) {
+        const viewport = page.getViewport({ scale: 1.2 });
         const canvas = document.getElementById("pdfViewer");
-        const context = canvas.getContext("2d");
+        const ctx = canvas.getContext("2d");
 
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
-        const renderTask = page.render({ canvasContext: context, viewport });
-        renderTask.promise.then(function () {
-          pageRendering = false;
-          document.getElementById("pageNum").textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+        // Render PDF page to canvas
+        const renderTask = page.render({ canvasContext: ctx, viewport });
 
-          if (pageNumPending !== null) {
-            renderPage(pageNumPending);
-            pageNumPending = null;
-          }
+        // 🔥 Render selectable text layer
+        const textContent = await page.getTextContent();
+        const textLayerDiv = document.getElementById("textLayer");
+
+        textLayerDiv.innerHTML = "";
+        textLayerDiv.style.height = viewport.height + "px";
+        textLayerDiv.style.width = viewport.width + "px";
+
+        pdfjsLib.renderTextLayer({
+          textContent,
+          container: textLayerDiv,
+          viewport,
+          textDivs: [],
         });
+
+        await renderTask.promise;
+
+        pageRendering = false;
+        document.getElementById("pageNum").textContent =
+          `Page ${pageNum} of ${pdfDoc.numPages}`;
+
+        if (pageNumPending !== null) {
+          renderPage(pageNumPending);
+          pageNumPending = null;
+        }
       });
     }
 
@@ -189,30 +223,32 @@
 
     document.getElementById("nextBtn").addEventListener("click", function () {
       if (pageNum >= pdfDoc.numPages) return;
+      return;
       pageNum++;
       queueRenderPage(pageNum);
     });
 
+    // Load PDF
     getPdfUrl().then((url) => {
       if (url) {
         markAsRead();
-        pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
-          pdfDoc = pdfDoc_;
-          pageNum = 1;
-          renderPage(pageNum);
-        })
-        .catch((err) => {
-          document.querySelector(".pdf-wrapper").innerHTML = `<p>PDF failed to load: ${err.message}</p>`;
-        });
+        pdfjsLib
+          .getDocument(url)
+          .promise.then(function (pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            pageNum = 1;
+            renderPage(pageNum);
+          })
+          .catch((err) => {
+            document.querySelector(".pdf-wrapper").innerHTML =
+              `<p>PDF failed to load: ${err.message}</p>`;
+          });
       } else {
         document.querySelector(".pdf-wrapper").innerHTML = "<p>PDF not found</p>";
       }
     });
 
-
-    /* 🔥🔥🔥 DICTIONARY LOGIC ADDED BELOW 🔥🔥🔥 */
-
-    // Show popup when double-clicking ANY WORD on the page
+    /* 🔥 Dictionary Logic (unchanged) */
     document.addEventListener("dblclick", () => {
       const word = window.getSelection().toString().trim();
       if (word.length > 0 && /^[A-Za-z]+$/.test(word)) {
@@ -254,6 +290,5 @@
       }
     }
   </script>
-
 </body>
 </html>
