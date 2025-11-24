@@ -1,11 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>📚 Dashboard - Readify</title>
   <link rel="stylesheet" href="style.css" />
-</head>
+  <style>
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: none;
+      /* Hidden by default */
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: rgba(25, 25, 35, 0.95);
+      padding: 30px;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 350px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      color: white;
+      position: relative;
+    }
+
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #aaa;
+    }
+
+    .close:hover {
+      color: white;
+    }
+
+    .qr-code img {
+      margin: 15px 0;
+      border-radius: 10px;
+      border: 2px solid #7af7d9;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+    }
+
+    .rental-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+  <!DOCTYPE html>
+  <html lang="en">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📚 Dashboard - Readify</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Modal Styles */
+      .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: rgba(25, 25, 35, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        width: 350px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        color: white;
+        position: relative;
+      }
+
+      .close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 28px;
+        cursor: pointer;
+        color: #aaa;
+      }
+
+      .close:hover {
+        color: white;
+      }
+
+      .qr-code img {
+        margin: 15px 0;
+        border-radius: 10px;
+        border: 2px solid #7af7d9;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border: none;
+      }
+
+      .rental-item {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
 
 <body>
   <header>
@@ -15,20 +150,110 @@
       <a href="reviews.html">Reviews</a>
       <a href="ratings.html">Ratings</a>
       <a href="history.html">History</a>
+      <a href="#" onclick="window.openMyRentals()">My Rentals</a>
+      <a href="#" onclick="window.openProfileModal()">Profile</a>
       <button id="logoutBtn" class="btn">Logout</button>
     </nav>
   </header>
 
   <main>
-    <h2>Available Books</h2>
-    <div id="bookList" class="grid"></div>
+    <div class="dashboard-container">
+      <h2>Available Books</h2>
+      <div id="bookList" class="grid"></div>
+
+      <h2 style="margin-top: 50px;">🔄 Continue Reading</h2>
+      <div id="continueReadingList" class="continue-list"></div>
+
+      <h2 style="margin-top: 50px;">✅ Completed Books</h2>
+      <div id="completedList" class="continue-list"></div>
+    </div>
+
+    <!-- 🆕 Rental Modal -->
+    <div id="rentalModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeRentModal()">&times;</span>
+        <h2>📖 Rent Book</h2>
+        <p id="rentBookTitle"></p>
+        <p>Rate: ₹<span id="rentPrice">2</span>/hr</p>
+
+        <label>Duration (Hours):</label>
+        <input type="number" id="rentHours" min="1" value="1" onchange="updateCost()">
+
+        <h3>Total: ₹<span id="totalCost">2</span></h3>
+
+        <div class="qr-code">
+          <img src="" alt="QR Code" id="qrImage">
+          <p>Scan to Pay</p>
+        </div>
+
+        <label>Enter Transaction ID (UTR):</label>
+        <input type="text" id="transactionId" placeholder="e.g. 1234567890" required>
+
+        <button class="btn" onclick="submitRental()">Confirm Payment</button>
+      </div>
+    </div>
+
+    <!-- 🆕 My Rentals Modal -->
+    <div id="myRentalsModal" class="modal">
+      <div class="modal-content" style="width: 500px;">
+        <span class="close" onclick="closeMyRentalsModal()">&times;</span>
+        <h2>⏳ My Active Rentals</h2>
+        <div id="activeRentalsList" style="text-align: left; margin-top: 20px;"></div>
+      </div>
+    </div>
+
+    <!-- 🆕 Top Up Modal -->
+    <div id="topUpModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeTopUpModal()">&times;</span>
+        <h2>➕ Top Up Rental</h2>
+        <p id="topUpTitle"></p>
+        <p>Rate: ₹<span id="topUpPrice">2</span>/hr</p>
+
+        <label>Additional Hours:</label>
+        <input type="number" id="topUpHours" min="1" value="1" onchange="updateTopUpCost()">
+
+        <h3>Total: ₹<span id="topUpTotal">2</span></h3>
+
+        <div class="qr-code">
+          <img id="topUpQrImage" src="" alt="QR Code">
+          <p>Scan to Pay</p>
+        </div>
+
+        <label>Enter Transaction ID (UTR):</label>
+        <input type="text" id="topUpTransactionId" placeholder="e.g. 1234567890" required>
+
+        <button class="btn" onclick="submitTopUp()">Confirm Top Up</button>
+      </div>
+    </div>
+
+    <!-- 🆕 Profile Modal -->
+    <div id="profileModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeProfileModal()">&times;</span>
+        <h2>👤 User Profile</h2>
+        <div style="text-align: left; margin-top: 20px; font-size: 1.1rem;">
+          <p><strong>Name:</strong> <span id="profileName"></span></p>
+          <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+        </div>
+      </div>
+    </div>
+
   </main>
 
-  <script>
+  <script type="module">
+    import API_BASE_URL from "./config.js";
+
     const token = localStorage.getItem("token");
     if (!token) window.location.href = "login.html";
 
     const bookList = document.getElementById("bookList");
+    const continueList = document.getElementById("continueReadingList");
+    const completedList = document.getElementById("completedList");
+
+    let currentBookId = null;
+    let currentRentPrice = 2;
+    let currentRentalId = null; // For Top Up
 
     // ✅ Remove duplicate books
     function removeDuplicates(books) {
@@ -42,30 +267,47 @@
 
     async function loadBooks() {
       try {
-        const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books", {
+        const res = await fetch(`${API_BASE_URL}/books`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         let books = await res.json();
         books = removeDuplicates(books);
 
+        // Fetch My Rentals to check active status
+        const rentalRes = await fetch(`${API_BASE_URL}/rentals/my-rentals`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const myRentals = await rentalRes.json();
+        const activeRentals = new Set(myRentals.filter(r => r.status === 'active').map(r => r.bookId._id));
+        const pendingRentals = new Set(myRentals.filter(r => r.status === 'pending').map(r => r.bookId._id));
+
         bookList.innerHTML = books.length
           ? books
-              .map(
-                (b) => `
+            .map((b) => {
+              let actionBtn;
+              if (activeRentals.has(b._id)) {
+                actionBtn = `<button onclick="window.openReader('${b._id}')">Read (Rented)</button>`;
+              } else if (pendingRentals.has(b._id)) {
+                actionBtn = `<button disabled style="background: #ffa500; cursor: not-allowed;">Pending Approval</button>`;
+              } else if (b.isRentable) {
+                actionBtn = `<button onclick="window.openRentModal('${b._id}', '${b.title}', ${b.rentPrice})">Rent @ ₹${b.rentPrice}/hr</button>`;
+              } else {
+                actionBtn = `<button onclick="window.openReader('${b._id}')">Read</button>`;
+              }
+
+              return `
             <div class="card">
               <h3>${b.title}</h3>
               <p>${b.authors?.length ? b.authors.join(", ") : "Unknown Author"}</p>
               <p>${b.description || ""}</p>
-              <p>⭐ ${
-                b.averageRating ? b.averageRating.toFixed(1) : "No ratings"
-              } (${b.ratingsCount || 0} ratings)</p>
-
-              <button onclick="openReader('${b._id}')">Read</button>
+              <p>⭐ ${b.averageRating ? b.averageRating.toFixed(1) : "No ratings"
+                } (${b.ratingsCount || 0} ratings)</p>
+              ${actionBtn}
             </div>
-          `
-              )
-              .join("")
+          `;
+            })
+            .join("")
           : "<p>No books available.</p>";
       } catch (err) {
         console.error(err);
@@ -73,7 +315,237 @@
       }
     }
 
-    function openReader(id) {
+    // 🆕 Open Rent Modal
+    window.openRentModal = function (id, title, price) {
+      currentBookId = id;
+      currentRentPrice = price || 2;
+      document.getElementById("rentBookTitle").innerText = title;
+      document.getElementById("rentPrice").innerText = currentRentPrice;
+      document.getElementById("rentalModal").style.display = "flex";
+      updateCost();
+    };
+
+    // 🆕 Close Modal
+    window.closeRentModal = function () {
+      document.getElementById("rentalModal").style.display = "none";
+    };
+
+    // 🆕 Update Cost
+    window.updateCost = function () {
+      const hours = document.getElementById("rentHours").value;
+      const total = hours * currentRentPrice;
+      document.getElementById("totalCost").innerText = total;
+      // Update QR Code with amount
+      document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yashwanth@upi&pn=Readify&am=${total}&cu=INR`;
+    };
+
+    // 🆕 Submit Rental
+    window.submitRental = async function () {
+      const hours = document.getElementById("rentHours").value;
+      const transactionId = document.getElementById("transactionId").value;
+
+      if (!transactionId) return alert("Please enter Transaction ID");
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/rentals/request`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ bookId: currentBookId, hours, transactionId })
+        });
+
+        if (res.ok) {
+          alert("Rental Request Submitted! Waiting for Admin Approval.");
+          closeRentModal();
+          loadBooks(); // Refresh UI
+        } else {
+          alert("Error submitting request");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // 🆕 Open My Rentals Modal
+    window.openMyRentals = async function () {
+      document.getElementById("myRentalsModal").style.display = "flex";
+      const list = document.getElementById("activeRentalsList");
+      list.innerHTML = "<p>Loading...</p>";
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/rentals/my-rentals`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const rentals = await res.json();
+        const activeRentals = rentals.filter(r => r.status === 'active');
+
+        if (activeRentals.length === 0) {
+          list.innerHTML = "<p>No active rentals.</p>";
+          return;
+        }
+
+        list.innerHTML = activeRentals.map(r => {
+          const endTime = new Date(r.endTime);
+          const now = new Date();
+          const timeLeft = endTime - now;
+          const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
+          const minsLeft = Math.max(0, Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60)));
+
+          let actionBtn = `<button class="btn-small" style="margin-top: 10px;" onclick="window.openTopUp('${r._id}', '${r.bookId.title}', ${r.bookId.rentPrice})">➕ Top Up</button>`;
+
+          if (r.extensionStatus === 'pending') {
+            actionBtn = `<button class="btn-small" style="margin-top: 10px; background: #ffa500; cursor: not-allowed;" disabled>⏳ Extension Pending</button>`;
+          }
+
+          return `
+            <div class="rental-item">
+                <h3>${r.bookId.title}</h3>
+                <p>Time Left: <strong>${hoursLeft}h ${minsLeft}m</strong></p>
+                ${actionBtn}
+            </div>
+        `;
+        }).join("");
+
+      } catch (err) {
+        console.error(err);
+        list.innerHTML = "<p>Error loading rentals.</p>";
+      }
+    };
+
+    window.closeMyRentalsModal = function () {
+      document.getElementById("myRentalsModal").style.display = "none";
+    };
+
+    // 🆕 Top Up Logic
+    window.openTopUp = function (rentalId, title, price) {
+      currentRentalId = rentalId;
+      currentRentPrice = price;
+      document.getElementById("topUpTitle").innerText = title;
+      document.getElementById("topUpPrice").innerText = price;
+      document.getElementById("topUpModal").style.display = "flex";
+      updateTopUpCost();
+      closeMyRentalsModal();
+    };
+
+    window.closeTopUpModal = function () {
+      document.getElementById("topUpModal").style.display = "none";
+    };
+
+    window.updateTopUpCost = function () {
+      const hours = document.getElementById("topUpHours").value;
+      const total = hours * currentRentPrice;
+      document.getElementById("topUpTotal").innerText = total;
+      document.getElementById("topUpQrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yashwanth@upi&pn=Readify&am=${total}&cu=INR`;
+    };
+
+    window.submitTopUp = async function () {
+      const hours = document.getElementById("topUpHours").value;
+      const transactionId = document.getElementById("topUpTransactionId").value;
+
+      if (!transactionId) return alert("Please enter Transaction ID");
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/rentals/extend/${currentRentalId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ hours, transactionId })
+        });
+
+        if (res.ok) {
+          alert("Top Up Requested! Waiting for Admin Approval.");
+          closeTopUpModal();
+          loadBooks();
+        } else {
+          alert("Error extending rental");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // 🆕 Profile Modal Logic
+    window.openProfileModal = function () {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user) {
+        document.getElementById("profileName").innerText = user.name;
+        document.getElementById("profileEmail").innerText = user.email;
+        document.getElementById("profileModal").style.display = "flex";
+      }
+    };
+
+    window.closeProfileModal = function () {
+      document.getElementById("profileModal").style.display = "none";
+    };
+
+    async function loadContinueReading() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const history = await res.json();
+        console.log("📜 History Data:", history);
+
+        const continueBooks = [];
+        const completedBooks = [];
+        const seenBooks = new Set();
+
+        for (const h of history) {
+          if (h.bookId && !seenBooks.has(h.bookId._id)) {
+            seenBooks.add(h.bookId._id);
+            if (h.isCompleted) {
+              completedBooks.push(h);
+            } else {
+              continueBooks.push(h);
+            }
+          }
+        }
+
+        // Render Continue Reading
+        continueList.innerHTML = continueBooks.length
+          ? continueBooks.slice(0, 3).map(h => {
+            const progress = h.totalPages > 0 ? Math.round((h.currentPage / h.totalPages) * 100) : 0;
+            return `
+          <div class="continue-card">
+            <div class="continue-info">
+              <h3>${h.bookId.title}</h3>
+              <p>Last read: ${new Date(h.date).toLocaleDateString()}</p>
+              <div class="progress-container">
+                <div class="progress-bar" style="width: ${progress}%"></div>
+              </div>
+              <p style="font-size: 0.8rem; margin-top: 5px;">${progress}% Complete</p>
+            </div>
+            <button class="continue-btn" onclick="window.openReader('${h.bookId._id}')">Resume</button>
+          </div>
+          `;
+          }).join("")
+          : "<p style='color: #888;'>No books in progress.</p>";
+
+        // Render Completed Books
+        completedList.innerHTML = completedBooks.length
+          ? completedBooks.map(h => `
+          <div class="continue-card" style="border-color: var(--secondary-neon);">
+            <div class="continue-info">
+              <h3>${h.bookId.title}</h3>
+              <p>Finished on: ${new Date(h.date).toLocaleDateString()}</p>
+              <p style="color: var(--secondary-neon);">✅ Completed</p>
+            </div>
+            <button class="continue-btn" onclick="window.openReader('${h.bookId._id}')">Read Again</button>
+          </div>
+        `).join("")
+          : "<p style='color: #888;'>No completed books yet.</p>";
+
+      } catch (err) {
+        console.error("Error loading history:", err);
+      }
+    }
+
+    window.openReader = function (id) {
       localStorage.setItem("bookId", id);
       window.location.href = "reader.html";
     }
@@ -85,6 +557,8 @@
     });
 
     loadBooks();
+    loadContinueReading();
   </script>
 </body>
+
 </html>

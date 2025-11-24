@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,28 +14,29 @@
       padding: 20px;
       border-radius: 12px;
       margin-bottom: 25px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255, 255, 255, 0.06);
       border-radius: 12px;
       overflow: hidden;
       backdrop-filter: blur(8px);
     }
 
-    th, td {
+    th,
+    td {
       padding: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       text-align: center;
       color: white;
     }
 
     th {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       color: #7af7d9;
       font-weight: 600;
     }
@@ -58,7 +60,7 @@
     }
 
     input.edit-input {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       border: none;
       color: white;
       text-align: center;
@@ -78,6 +80,7 @@
   </header>
 
   <main>
+    <!-- All Books Section -->
     <div class="admin-section">
       <h2>📚 All Books</h2>
       <table>
@@ -85,7 +88,7 @@
           <tr>
             <th>Title</th>
             <th>Authors</th>
-            <th>Categories</th>
+            <th>Rentable</th>
             <th>Edit</th>
             <th>Delete</th>
           </tr>
@@ -94,6 +97,60 @@
       </table>
     </div>
 
+    <!-- Pending Rentals Section -->
+    <div class="admin-section">
+      <h2>🔔 Pending Rental Requests</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Book</th>
+            <th>Duration</th>
+            <th>Cost</th>
+            <th>Transaction ID</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="pendingRentalsTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Pending Extensions Section -->
+    <div class="admin-section">
+      <h2>➕ Pending Extension Requests</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Book</th>
+            <th>Extra Time</th>
+            <th>Cost</th>
+            <th>Transaction ID</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="pendingExtensionsTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Active Rentals Section -->
+    <div class="admin-section">
+      <h2>⏳ Active Rentals</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Book</th>
+            <th>Ends In</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="activeRentalsTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Add Book Section -->
     <div class="admin-section">
       <h2>➕ Add Book</h2>
       <form id="addBookForm">
@@ -107,6 +164,7 @@
     </div>
   </main>
 
-  <script src="admin.js"></script>
+  <script type="module" src="admin.js"></script>
 </body>
+
 </html>

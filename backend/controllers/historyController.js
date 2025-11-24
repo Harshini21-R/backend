@@ -5,7 +5,8 @@ const Book = require("../models/Book");
 // ➕ Add / Update history
 exports.addToHistory = async (req, res) => {
   try {
-    const { bookId } = req.body;
+    console.log("📥 addToHistory Body:", req.body);
+    const { bookId, currentPage, totalPages, isCompleted } = req.body;
 
     // ✅ Check token user
     if (!req.user || !req.user._id) {
@@ -26,7 +27,12 @@ exports.addToHistory = async (req, res) => {
     // ✅ Update existing OR create new
     const history = await History.findOneAndUpdate(
       { userId: req.user._id, bookId },
-      { date: Date.now() },
+      {
+        date: Date.now(),
+        currentPage: currentPage || 1,
+        totalPages: totalPages || 0,
+        isCompleted: isCompleted || false
+      },
       { upsert: true, new: true } // update if exists
     );
 

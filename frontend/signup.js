@@ -1,3 +1,5 @@
+import API_BASE_URL from "./config.js";
+
 document.getElementById('signupForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -6,7 +8,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value.trim();
 
   try {
-    const res = await fetch('https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/auth/register', {
+    const res = await fetch(`${API_BASE_URL}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),

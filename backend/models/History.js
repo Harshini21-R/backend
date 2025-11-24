@@ -12,6 +12,9 @@ const historySchema = new mongoose.Schema(
       ref: "Book",
       required: true
     },
+    currentPage: { type: Number, default: 1 },
+    totalPages: { type: Number, default: 0 },
+    isCompleted: { type: Boolean, default: false },
     date: { type: Date, default: Date.now },
   },
   { timestamps: true }

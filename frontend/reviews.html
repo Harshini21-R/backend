@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,13 +18,15 @@
     <div id="reviewsList" class="list"></div>
   </main>
 
-  <script>
+  <script type="module">
+    import API_BASE_URL from "./config.js";
+
     const token = localStorage.getItem("token");
 
     if (!token) window.location.href = "login.html";
 
     async function loadReviews() {
-      const res = await fetch("https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/reviews");
+      const res = await fetch(`${API_BASE_URL}/reviews`);
       const data = await res.json();
 
       const container = document.getElementById("reviewsList");
@@ -47,11 +50,12 @@
         .join("");
     }
 
-    function goBack() {
+    window.goBack = function () {
       window.location.href = "dashboard.html";
     }
 
     loadReviews();
   </script>
 </body>
+
 </html>

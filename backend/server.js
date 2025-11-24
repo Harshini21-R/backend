@@ -12,6 +12,7 @@ const bookRoutes = require("./routes/bookRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
 const historyRoutes = require("./routes/historyRoutes");
+const rentalRoutes = require("./routes/rentalRoutes");
 
 const app = express();
 
@@ -29,6 +30,10 @@ app.use(
     origin: [
       "http://localhost:3000",
       "http://localhost:5500",
+      "http://localhost:8000",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5500",
+      "http://127.0.0.1:8000",
       "https://yashwanthrajks1rvu23bsc180-readify-3.onrender.com",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -63,6 +68,7 @@ app.use("/api/books", bookRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/history", historyRoutes);
+app.use("/api/rentals", rentalRoutes);
 
 // ---------- Backend home route ----------
 app.get("/", (req, res) => {

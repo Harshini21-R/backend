@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,23 +15,45 @@
       bottom: 20px;
       right: 20px;
       width: 320px;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0, 0, 0, 0.85);
       padding: 18px;
       color: white;
       border-radius: 12px;
       display: none;
       z-index: 99999;
-      box-shadow: 0 0 10px rgba(255,255,255,0.2);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
     }
-    .dict-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
-    .close-dict { float: right; cursor: pointer; font-size: 18px; }
-    .dict-input { width: 100%; padding: 8px; border-radius: 6px; border: none; margin-top: 10px; margin-bottom: 10px; }
+
+    .dict-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .close-dict {
+      float: right;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .dict-input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
 
     /* PDF wrapper */
-    .pdf-wrapper { position: relative; }
+    .pdf-wrapper {
+      position: relative;
+    }
 
     /* Hide canvas completely */
-    #pdfViewer { display: none !important; }
+    #pdfViewer {
+      display: none !important;
+    }
 
     /* Text-only rendering */
     .textLayer {
@@ -57,7 +80,7 @@
     .pdf-page {
       margin-bottom: 28px;
       padding-bottom: 10px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
   </style>
 </head>
@@ -102,209 +125,461 @@
   <!-- Dictionary -->
   <div id="dictionaryBox" class="dictionary-box">
     <span class="close-dict" onclick="closeDictionary()">✖</span>
-    <div class="dict-title">📘 Dictionary</div>
-    <input id="dictSearch" class="dict-input" placeholder="Search a word..." />
-    <button class="reader-btn" onclick="searchWord()">Search</button>
-    <p id="dictMeaning" style="margin-top:10px;"></p>
-  </div>
+    <!DOCTYPE html>
+    <html lang="en">
 
-<script>
-  const token = localStorage.getItem("token");
-  const bookId = localStorage.getItem("bookId");
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Reader - Readify</title>
+      <link rel="stylesheet" href="style.css" />
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
-  if (!token || !bookId) window.location.href = "dashboard.html";
-
-  let pdfDoc = null;
-  let currentPage = 1;
-
-  async function getPdfUrl() {
-    const res = await fetch(
-      `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/books/${bookId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const book = await res.json();
-    function getFilename(path) { return path ? path.split("/").pop() : ""; }
-    return book.pdfUrl
-      ? `https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/pdfs/${getFilename(book.pdfUrl)}`
-      : "";
-  }
-
-  async function markAsRead() {
-    await fetch(
-      "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/history",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bookId }),
-      }
-    );
-  }
-
-  async function submitRating() {
-    const rating = document.getElementById("ratingInput").value;
-    if (!rating) return alert("Enter rating");
-    const res = await fetch(
-      "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/ratings",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId, rating }),
-      }
-    );
-    alert(res.ok ? "✅ Rating submitted" : "❌ Rating failed");
-  }
-
-  async function submitReview() {
-    const comment = document.getElementById("reviewInput").value;
-    if (!comment) return alert("Enter review");
-    const res = await fetch(
-      "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api/reviews",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId, comment }),
-      }
-    );
-    alert(res.ok ? "✅ Review submitted" : "❌ Review failed");
-  }
-
-  /* ---------------- PAGE RENDERER ---------------- */
-
-  async function renderAllPagesTextOnly(pdf) {
-    const pagesContainer = document.getElementById("pagesContainer");
-    pagesContainer.innerHTML = "";
-
-    for (let p = 1; p <= pdf.numPages; p++) {
-      const page = await pdf.getPage(p);
-
-      const pageDiv = document.createElement("div");
-      pageDiv.className = "pdf-page";
-      pageDiv.dataset.pageNumber = p;
-
-      if (p !== 1) pageDiv.style.display = "none";
-
-      const header = document.createElement("div");
-      header.style.fontWeight = "600";
-      header.style.marginBottom = "8px";
-      header.textContent = `Page ${p}`;
-      pageDiv.appendChild(header);
-
-      const textLayer = document.createElement("div");
-      textLayer.className = "textLayer";
-      pageDiv.appendChild(textLayer);
-
-      const textContent = await page.getTextContent();
-      const items = textContent.items || [];
-
-      let line = "";
-      const paragraph = document.createElement("div");
-      paragraph.style.marginBottom = "8px";
-
-      items.forEach((it, idx) => {
-        line += (it.str || "") + " ";
-        if (idx % 18 === 0 && idx !== 0) {
-          const span = document.createElement("span");
-          span.textContent = line.trim();
-          paragraph.appendChild(span);
-          paragraph.appendChild(document.createElement("br"));
-          line = "";
+      <style>
+        /* Dictionary popup */
+        .dictionary-box {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          width: 320px;
+          background: rgba(0, 0, 0, 0.85);
+          padding: 18px;
+          color: white;
+          border-radius: 12px;
+          display: none;
+          z-index: 99999;
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
-      });
 
-      if (line.trim()) {
-        const span = document.createElement("span");
-        span.textContent = line.trim();
-        paragraph.appendChild(span);
-      }
+        .dict-title {
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 8px;
+        }
 
-      textLayer.appendChild(paragraph);
-      pagesContainer.appendChild(pageDiv);
-    }
+        .close-dict {
+          float: right;
+          cursor: pointer;
+          font-size: 18px;
+        }
 
-    document.getElementById("pageNum").textContent =
-      `Page ${currentPage} of ${pdf.numPages}`;
-  }
+        .dict-input {
+          width: 100%;
+          padding: 8px;
+          border-radius: 6px;
+          border: none;
+          margin-top: 10px;
+          margin-bottom: 10px;
+        }
 
-  function gotoPage(n) {
-    const pages = document.querySelectorAll(".pdf-page");
-    if (!pages.length) return;
+        /* PDF wrapper */
+        .pdf-wrapper {
+          position: relative;
+        }
 
-    if (n < 1 || n > pages.length) return;
+        /* Hide canvas completely */
+        #pdfViewer {
+          display: none !important;
+        }
 
-    pages.forEach(pg => (pg.style.display = "none"));
+        /* Text-only rendering */
+        .textLayer {
+          position: relative;
+          z-index: 10;
+          pointer-events: auto;
+          user-select: text;
+          line-height: 1.3;
+          padding: 12px;
+          background: transparent;
+          color: #111;
+          font-family: serif;
+        }
 
-    const target = document.querySelector(`.pdf-page[data-page-number="${n}"]`);
-    if (target) target.style.display = "block";
+        .textLayer span {
+          position: static !important;
+          transform: none !important;
+          white-space: normal !important;
+          display: block;
+          opacity: 1 !important;
+        }
 
-    currentPage = n;
-    document.getElementById("pageNum").textContent =
-      `Page ${currentPage} of ${pages.length}`;
-  }
+        /* Page wrapper */
+        .pdf-page {
+          margin-bottom: 28px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+      </style>
+    </head>
 
-  document.getElementById("nextBtn").addEventListener("click", () =>
-    gotoPage(currentPage + 1)
-  );
+    <body>
+      <header class="reader-header">
+        <h1>📖 Reader</h1>
+        <button onclick="window.location.href='dashboard.html'" class="btn back-btn">⬅ Back</button>
+      </header>
 
-  document.getElementById("prevBtn").addEventListener("click", () =>
-    gotoPage(currentPage - 1)
-  );
+      <main class="reader-main">
 
-  getPdfUrl().then((url) => {
-    if (!url) {
-      document.querySelector(".pdf-wrapper").innerHTML = "<p>PDF not found</p>";
-      return;
-    }
+        <!-- Navigation -->
+        <div class="controls">
+          <button id="prevBtn" class="btn nav-btn">Previous</button>
+          <button id="nextBtn" class="btn nav-btn">Next</button>
+          <span id="pageNum" class="page-num"></span>
+        </div>
 
-    markAsRead();
-    pdfjsLib.getDocument(url).promise
-      .then(async (pdf) => {
-        pdfDoc = pdf;
-        await renderAllPagesTextOnly(pdf);
-        gotoPage(1);
-      })
-      .catch((err) => {
-        document.querySelector(".pdf-wrapper").innerHTML =
-          `<p>Load error: ${err.message}</p>`;
-      });
-  });
+        <!-- PDF renderer -->
+        <div class="pdf-wrapper">
+          <canvas id="pdfViewer"></canvas>
+          <div id="pagesContainer"></div>
+        </div>
 
-  /* ---------------- DICTIONARY ---------------- */
+        <!-- Rating + Review -->
+        <div class="rating-review-container">
+          <div class="rating-section">
+            <div class="section-title">⭐ Rate this Book</div>
+            <input id="ratingInput" class="rating-input" type="number" min="1" max="5" placeholder="1–5" />
+            <button class="reader-btn" onclick="submitRating()">Submit Rating</button>
+          </div>
 
-  document.addEventListener("dblclick", () => {
-    const word = window.getSelection().toString().trim();
-    if (word && /^[A-Za-z]+$/.test(word)) openDictionary(word);
-  });
+          <div class="review-section">
+            <div class="section-title">✍ Write a Review</div>
+            <textarea id="reviewInput" placeholder="Write your thoughts here..."></textarea>
+            <button class="reader-btn" onclick="submitReview()">Submit Review</button>
+          </div>
+        </div>
+      </main>
 
-  function openDictionary(word) {
-    document.getElementById("dictionaryBox").style.display = "block";
-    document.getElementById("dictSearch").value = word;
-    searchWord();
-  }
+      <!-- Dictionary -->
+      <div id="dictionaryBox" class="dictionary-box">
+        <span class="close-dict" onclick="closeDictionary()">✖</span>
+        <div class="dict-title">📘 Dictionary</div>
+        z-index: 10;
+        pointer-events: auto;
+        user-select: text;
+        line-height: 1.3;
+        padding: 12px;
+        background: transparent;
+        color: #111;
+        font-family: serif;
+        }
 
-  function closeDictionary() {
-    document.getElementById("dictionaryBox").style.display = "none";
-  }
+        .textLayer span {
+        position: static !important;
+        transform: none !important;
+        white-space: normal !important;
+        display: block;
+        opacity: 1 !important;
+        }
 
-  async function searchWord() {
-    const word = document.getElementById("dictSearch").value.trim();
-    if (!word) return;
+        /* Page wrapper */
+        .pdf-page {
+        margin-bottom: 28px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        </style>
+        </head>
 
-    const box = document.getElementById("dictMeaning");
-    box.textContent = "Loading...";
+        <body>
+          <header class="reader-header">
+            <h1>📖 Reader</h1>
+            <button onclick="window.location.href='dashboard.html'" class="btn back-btn">⬅ Back</button>
+          </header>
 
-    try {
-      const res = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
-      );
-      const data = await res.json();
-      box.textContent =
-        data[0]?.meanings[0]?.definitions[0]?.definition ||
-        "No meaning found.";
-    } catch {
-      box.textContent = "Error fetching meaning.";
-    }
-  }
-</script>
+          <main class="reader-main">
 
-</body>
-</html>
+            <!-- Navigation -->
+            <div class="controls">
+              <button id="prevBtn" class="btn nav-btn">Previous</button>
+              <button id="nextBtn" class="btn nav-btn">Next</button>
+              <span id="pageNum" class="page-num"></span>
+            </div>
+
+            <!-- PDF renderer -->
+            <div class="pdf-wrapper">
+              <canvas id="pdfViewer"></canvas>
+              <div id="pagesContainer"></div>
+            </div>
+
+            <!-- Rating + Review -->
+            <div class="rating-review-container">
+              <div class="rating-section">
+                <div class="section-title">⭐ Rate this Book</div>
+                <input id="ratingInput" class="rating-input" type="number" min="1" max="5" placeholder="1–5" />
+                <button class="reader-btn" onclick="submitRating()">Submit Rating</button>
+              </div>
+
+              <div class="review-section">
+                <div class="section-title">✍ Write a Review</div>
+                <textarea id="reviewInput" placeholder="Write your thoughts here..."></textarea>
+                <button class="reader-btn" onclick="submitReview()">Submit Review</button>
+              </div>
+            </div>
+          </main>
+
+          <!-- Dictionary -->
+          <div id="dictionaryBox" class="dictionary-box">
+            <span class="close-dict" onclick="closeDictionary()">✖</span>
+            <div class="dict-title">📘 Dictionary</div>
+            <input id="dictSearch" class="dict-input" placeholder="Search a word..." />
+            <button class="reader-btn" onclick="searchWord()">Search</button>
+            <p id="dictMeaning" style="margin-top:10px;"></p>
+          </div>
+
+          <script type="module">
+            import API_BASE_URL from "./config.js";
+
+            const token = localStorage.getItem("token");
+            const bookId = localStorage.getItem("bookId");
+
+            if (!token || !bookId) window.location.href = "dashboard.html";
+
+            let pdfDoc = null;
+            let currentPage = 1;
+
+            async function checkRentalAccess() {
+              try {
+                // 1. Get Book Details
+                const bookRes = await fetch(`${API_BASE_URL}/books/${bookId}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                const book = await bookRes.json();
+
+                if (!book.isRentable) return book; // Free book, allow access
+
+                // 2. Check Active Rental
+                const rentalRes = await fetch(`${API_BASE_URL}/rentals/my-rentals`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                const rentals = await rentalRes.json();
+
+                const activeRental = rentals.find(r =>
+                  r.bookId._id === bookId && r.status === 'active'
+                );
+
+                if (!activeRental) {
+                  alert("Rental Expired or Not Found. Please rent this book.");
+                  window.location.href = "dashboard.html";
+                  return null;
+                }
+
+                // Check if time expired
+                const endTime = new Date(activeRental.endTime).getTime();
+                if (Date.now() > endTime) {
+                  alert("Rental Time Expired!");
+                  window.location.href = "dashboard.html";
+                  return null;
+                }
+
+                return book;
+              } catch (err) {
+                console.error(err);
+                window.location.href = "dashboard.html";
+              }
+            }
+
+            async function getPdfUrl() {
+              const book = await checkRentalAccess();
+              if (!book) return "";
+
+              function getFilename(path) { return path ? path.split("/").pop() : ""; }
+              const baseUrl = API_BASE_URL.replace("/api", "");
+              return book.pdfUrl
+                ? `${baseUrl}/pdfs/${getFilename(book.pdfUrl)}`
+                : "";
+            }
+
+            async function markAsRead(pageNum = 1, totalPages = 0) {
+              const isCompleted = totalPages > 0 && pageNum === totalPages;
+              await fetch(
+                `${API_BASE_URL}/history`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({
+                    bookId,
+                    currentPage: pageNum,
+                    totalPages: totalPages,
+                    isCompleted: isCompleted
+                  }),
+                }
+              );
+            }
+
+            async function submitRating() {
+              const rating = document.getElementById("ratingInput").value;
+              if (!rating) return alert("Enter rating");
+              const res = await fetch(
+                `${API_BASE_URL}/ratings`,
+                {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({ bookId, rating }),
+                }
+              );
+              alert(res.ok ? "✅ Rating submitted" : "❌ Rating failed");
+            }
+
+            async function submitReview() {
+              const comment = document.getElementById("reviewInput").value;
+              if (!comment) return alert("Enter review");
+              const res = await fetch(
+                `${API_BASE_URL}/reviews`,
+                {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({ bookId, comment }),
+                }
+              );
+              alert(res.ok ? "✅ Review submitted" : "❌ Review failed");
+            }
+
+            // Expose functions to window for onclick handlers
+            window.submitRating = submitRating;
+            window.submitReview = submitReview;
+            window.searchWord = searchWord;
+            window.closeDictionary = closeDictionary;
+
+            /* ---------------- PAGE RENDERER ---------------- */
+
+            async function renderAllPagesTextOnly(pdf) {
+              const pagesContainer = document.getElementById("pagesContainer");
+              pagesContainer.innerHTML = "";
+
+              for (let p = 1; p <= pdf.numPages; p++) {
+                const page = await pdf.getPage(p);
+
+                const pageDiv = document.createElement("div");
+                pageDiv.className = "pdf-page";
+                pageDiv.dataset.pageNumber = p;
+
+                if (p !== 1) pageDiv.style.display = "none";
+
+                const header = document.createElement("div");
+                header.style.fontWeight = "600";
+                header.style.marginBottom = "8px";
+                header.textContent = `Page ${p}`;
+                pageDiv.appendChild(header);
+
+                const textLayer = document.createElement("div");
+                textLayer.className = "textLayer";
+                pageDiv.appendChild(textLayer);
+
+                const textContent = await page.getTextContent();
+                const items = textContent.items || [];
+
+                let line = "";
+                const paragraph = document.createElement("div");
+                paragraph.style.marginBottom = "8px";
+
+                items.forEach((it, idx) => {
+                  line += (it.str || "") + " ";
+                  if (idx % 18 === 0 && idx !== 0) {
+                    const span = document.createElement("span");
+                    span.textContent = line.trim();
+                    paragraph.appendChild(span);
+                    paragraph.appendChild(document.createElement("br"));
+                    line = "";
+                  }
+                });
+
+                if (line.trim()) {
+                  const span = document.createElement("span");
+                  span.textContent = line.trim();
+                  paragraph.appendChild(span);
+                }
+
+                textLayer.appendChild(paragraph);
+                pagesContainer.appendChild(pageDiv);
+              }
+
+              document.getElementById("pageNum").textContent =
+                `Page ${currentPage} of ${pdf.numPages}`;
+            }
+
+            function gotoPage(n) {
+              const pages = document.querySelectorAll(".pdf-page");
+              if (!pages.length) return;
+
+              if (n < 1 || n > pages.length) return;
+
+              pages.forEach(pg => (pg.style.display = "none"));
+
+              const target = document.querySelector(`.pdf-page[data-page-number="${n}"]`);
+              if (target) target.style.display = "block";
+
+              currentPage = n;
+              document.getElementById("pageNum").textContent =
+                `Page ${currentPage} of ${pages.length}`;
+
+              // ✅ Update progress
+              markAsRead(currentPage, pages.length);
+            }
+
+            document.getElementById("nextBtn").addEventListener("click", () =>
+              gotoPage(currentPage + 1)
+            );
+
+            document.getElementById("prevBtn").addEventListener("click", () =>
+              gotoPage(currentPage - 1)
+            );
+
+            getPdfUrl().then((url) => {
+              if (!url) {
+                document.querySelector(".pdf-wrapper").innerHTML = "<p>PDF not found</p>";
+                return;
+              }
+
+              pdfjsLib.getDocument(url).promise
+                .then(async (pdf) => {
+                  pdfDoc = pdf;
+                  await renderAllPagesTextOnly(pdf);
+                  gotoPage(1);
+                })
+                .catch((err) => {
+                  document.querySelector(".pdf-wrapper").innerHTML =
+                    `<p>Load error: ${err.message}</p>`;
+                });
+            });
+
+            /* ---------------- DICTIONARY ---------------- */
+
+            document.addEventListener("dblclick", () => {
+              const word = window.getSelection().toString().trim();
+              if (word && /^[A-Za-z]+$/.test(word)) openDictionary(word);
+            });
+
+            function openDictionary(word) {
+              document.getElementById("dictionaryBox").style.display = "block";
+              document.getElementById("dictSearch").value = word;
+              searchWord();
+            }
+
+            function closeDictionary() {
+              document.getElementById("dictionaryBox").style.display = "none";
+            }
+
+            async function searchWord() {
+              const word = document.getElementById("dictSearch").value.trim();
+              if (!word) return;
+
+              const box = document.getElementById("dictMeaning");
+              box.textContent = "Loading...";
+
+              try {
+                const res = await fetch(
+                  `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
+                );
+                const data = await res.json();
+                box.textContent =
+                  data[0]?.meanings[0]?.definitions[0]?.definition ||
+                  "No meaning found.";
+              } catch {
+                box.textContent = "Error fetching meaning.";
+              }
+            }
+          </script>
+
+        </body>
+
+    </html>

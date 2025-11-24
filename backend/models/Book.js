@@ -11,6 +11,9 @@ const bookSchema = new mongoose.Schema({
   publishedDate: { type: Date },
   averageRating: { type: Number, default: 0 },
   ratingsCount: { type: Number, default: 0 },
+  // 🆕 Rental Fields
+  isRentable: { type: Boolean, default: false },
+  rentPrice: { type: Number, default: 2 }, // Default 2 INR/hr
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -1,6 +1,5 @@
-// ✅ history.js
+import API_BASE_URL from "./config.js";
 
-const API_BASE = "https://yashwanthrajks1rvu23bsc180-readify-1.onrender.com/api";
 const token = localStorage.getItem("token");
 
 // Redirect to login if not logged in
@@ -13,7 +12,7 @@ if (!token) {
 // bookId = string
 async function addToHistory(bookId) {
   try {
-    const res = await fetch(`${API_BASE}/history`, {
+    const res = await fetch(`${API_BASE_URL}/history`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,7 +37,7 @@ async function addToHistory(bookId) {
 // ✅ Load reading history
 async function loadHistory() {
   try {
-    const res = await fetch(`${API_BASE}/history`, {
+    const res = await fetch(`${API_BASE_URL}/history`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -52,20 +51,14 @@ async function loadHistory() {
 
     document.getElementById("historyList").innerHTML = history.length
       ? history.map(
-          (h) => `
+        (h) => `
         <div class="card">
-          ${
-            h.bookId?.coverUrl
-              ? `<img src="${h.bookId.coverUrl}" alt="${h.bookId.title}"
-                style="width:80px;height:110px;border-radius:7px;float:right;margin-left:18px;">`
-              : ""
-          }
           <h3>${h.bookId?.title || "Unknown Book"}</h3>
           <p>Read on: ${new Date(h.date).toLocaleString()}</p>
-          <button onclick="rateBook('${h.bookId?._id || ""}')">Rate</button>
+          <button onclick="window.rateBook('${h.bookId?._id || ""}')">Rate</button>
         </div>
       `
-        ).join("")
+      ).join("")
       : "<p>No reading history yet.</p>";
   } catch (err) {
     console.error("Error loading history:", err);
@@ -73,10 +66,10 @@ async function loadHistory() {
 }
 
 // ✅ Redirect to rating page
-function rateBook(bookId) {
+window.rateBook = function (bookId) {
   if (!bookId) return;
   localStorage.setItem("bookId", bookId);
-  window.location.href = "rating.html";
+  window.location.href = "ratings.html";
 }
 
 // Auto-load when history page opens
