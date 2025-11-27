@@ -223,7 +223,7 @@
               } else if (pendingRentals.has(b._id)) {
                 actionBtn = `<button disabled style="background: #ffa500; cursor: not-allowed;">Pending Approval</button>`;
               } else if (rejectedRentals.has(b._id)) {
-                actionBtn = `<button onclick="alert('Your rental request was rejected. Please check your payment details and try again.')" style="background: #ff4b4b;">Request Rejected</button>`;
+                actionBtn = `<button onclick="alert('Your rental request was rejected. Please check your payment details.')" style="background: #ff4b4b; cursor: help;">Request Rejected</button>`;
               } else if (b.isRentable) {
                 actionBtn = `<button onclick="window.openRentModal('${b._id}', '${b.title}', ${b.rentPrice})">Rent @ ₹${b.rentPrice}/hr</button>`;
               } else {
@@ -330,7 +330,7 @@
           if (r.extensionStatus === 'pending') {
             actionBtn = `<button class="btn-small" style="margin-top: 10px; background: #ffa500; cursor: not-allowed;" disabled>⏳ Extension Pending</button>`;
           } else if (r.extensionStatus === 'rejected') {
-            actionBtn = `<button class="btn-small" style="margin-top: 10px; background: #ff4b4b;" onclick="alert('Extension rejected. Check your payment thing.')">❌ Extension Rejected</button>`;
+            actionBtn = `<button class="btn-small" style="margin-top: 10px; background: #ff4b4b;" onclick="alert('Extension rejected. Please check your payment details.')">❌ Extension Rejected</button>`;
           }
 
           return `
