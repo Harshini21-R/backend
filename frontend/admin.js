@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   =============================== */
   async function loadBooks() {
     try {
-      const res = await fetch(`${API_BASE_URL}/books`, {
+      const res = await fetch(`${API_BASE_URL}/books?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -310,14 +310,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!confirm("Delete this book?")) return;
 
     try {
-      await fetch(`${API_BASE_URL}/books/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/books/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete book");
+      }
+
       loadBooks();
     } catch (err) {
       console.error("Error deleting book:", err);
+      alert(`Error deleting book: ${err.message}`);
     }
   };
 
