@@ -25,7 +25,7 @@ const rentalSchema = new mongoose.Schema(
         // Extension Request Fields
         extensionStatus: {
             type: String,
-            enum: ["none", "pending"],
+            enum: ["none", "pending", "rejected"],
             default: "none"
         },
         extensionHours: { type: Number },

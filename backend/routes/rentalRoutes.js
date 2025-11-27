@@ -200,6 +200,47 @@ router.put("/approve-extension/:id", authMiddleware, async (req, res) => {
     }
 });
 
+// 8.5️⃣ Reject Extension (Admin)
+router.put("/reject-extension/:id", authMiddleware, async (req, res) => {
+    try {
+        const rental = await Rental.findById(req.params.id);
+        if (!rental) return res.status(404).json({ error: "Rental not found" });
+
+        if (rental.extensionStatus !== "pending") {
+            return res.status(400).json({ error: "No pending extension" });
+        }
+
+        // Reject extension
+        rental.extensionStatus = "rejected";
+        // We keep extensionHours/Cost/TransactionId to show what was rejected if needed, 
+        // or we could clear them. The user wants a message "check your payment thing".
+        // Keeping them allows the user to see what they tried to do.
+
+        await rental.save();
+        res.json({ message: "Extension rejected", rental });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 8.6️⃣ Reject Rental (Admin)
+router.put("/reject/:id", authMiddleware, async (req, res) => {
+    try {
+        const rental = await Rental.findById(req.params.id);
+        if (!rental) return res.status(404).json({ error: "Rental not found" });
+
+        if (rental.status !== "pending") {
+            return res.status(400).json({ error: "Rental is not pending" });
+        }
+
+        rental.status = "rejected";
+        await rental.save();
+        res.json({ message: "Rental rejected", rental });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 9️⃣ Delete Rental (Admin)
 router.delete("/:id", authMiddleware, async (req, res) => {
     try {

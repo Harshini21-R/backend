@@ -51,6 +51,8 @@
       margin: 15px 0;
       border-radius: 10px;
       border: 2px solid #7af7d9;
+      width: 150px;
+      height: 150px;
     }
 
     input {
@@ -69,78 +71,7 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
   </style>
-  <!DOCTYPE html>
-  <html lang="en">
-
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>📚 Dashboard - Readify</title>
-    <link rel="stylesheet" href="style.css" />
-    <style>
-      /* Modal Styles */
-      .modal {
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        display: none;
-        /* Hidden by default */
-        justify-content: center;
-        align-items: center;
-      }
-
-      .modal-content {
-        background: rgba(25, 25, 35, 0.95);
-        padding: 30px;
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        width: 350px;
-        text-align: center;
-        backdrop-filter: blur(10px);
-        color: white;
-        position: relative;
-      }
-
-      .close {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        font-size: 28px;
-        cursor: pointer;
-        color: #aaa;
-      }
-
-      .close:hover {
-        color: white;
-      }
-
-      .qr-code img {
-        margin: 15px 0;
-        border-radius: 10px;
-        border: 2px solid #7af7d9;
-      }
-
-      input {
-        width: 100%;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border: none;
-      }
-
-      .rental-item {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-    </style>
-  </head>
+</head>
 
 <body>
   <header>
@@ -182,7 +113,7 @@
         <h3>Total: ₹<span id="totalCost">2</span></h3>
 
         <div class="qr-code">
-          <img src="" alt="QR Code" id="qrImage">
+          <img src="assets/payment_qr.jpg" alt="QR Code" id="qrImage">
           <p>Scan to Pay</p>
         </div>
 
@@ -216,7 +147,7 @@
         <h3>Total: ₹<span id="topUpTotal">2</span></h3>
 
         <div class="qr-code">
-          <img id="topUpQrImage" src="" alt="QR Code">
+          <img id="topUpQrImage" src="assets/payment_qr.jpg" alt="QR Code">
           <p>Scan to Pay</p>
         </div>
 
@@ -281,6 +212,7 @@
         const myRentals = await rentalRes.json();
         const activeRentals = new Set(myRentals.filter(r => r.status === 'active').map(r => r.bookId._id));
         const pendingRentals = new Set(myRentals.filter(r => r.status === 'pending').map(r => r.bookId._id));
+        const rejectedRentals = new Set(myRentals.filter(r => r.status === 'rejected').map(r => r.bookId._id));
 
         bookList.innerHTML = books.length
           ? books
@@ -290,6 +222,8 @@
                 actionBtn = `<button onclick="window.openReader('${b._id}')">Read (Rented)</button>`;
               } else if (pendingRentals.has(b._id)) {
                 actionBtn = `<button disabled style="background: #ffa500; cursor: not-allowed;">Pending Approval</button>`;
+              } else if (rejectedRentals.has(b._id)) {
+                actionBtn = `<button onclick="alert('Your rental request was rejected. Please check your payment details and try again.')" style="background: #ff4b4b;">Request Rejected</button>`;
               } else if (b.isRentable) {
                 actionBtn = `<button onclick="window.openRentModal('${b._id}', '${b.title}', ${b.rentPrice})">Rent @ ₹${b.rentPrice}/hr</button>`;
               } else {
@@ -335,8 +269,6 @@
       const hours = document.getElementById("rentHours").value;
       const total = hours * currentRentPrice;
       document.getElementById("totalCost").innerText = total;
-      // Update QR Code with amount
-      document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yashwanth@upi&pn=Readify&am=${total}&cu=INR`;
     };
 
     // 🆕 Submit Rental
@@ -397,6 +329,8 @@
 
           if (r.extensionStatus === 'pending') {
             actionBtn = `<button class="btn-small" style="margin-top: 10px; background: #ffa500; cursor: not-allowed;" disabled>⏳ Extension Pending</button>`;
+          } else if (r.extensionStatus === 'rejected') {
+            actionBtn = `<button class="btn-small" style="margin-top: 10px; background: #ff4b4b;" onclick="alert('Extension rejected. Check your payment thing.')">❌ Extension Rejected</button>`;
           }
 
           return `
@@ -437,7 +371,6 @@
       const hours = document.getElementById("topUpHours").value;
       const total = hours * currentRentPrice;
       document.getElementById("topUpTotal").innerText = total;
-      document.getElementById("topUpQrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yashwanth@upi&pn=Readify&am=${total}&cu=INR`;
     };
 
     window.submitTopUp = async function () {

@@ -119,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <td style="font-family: monospace; color: #ffd700;">${r.transactionId}</td>
             <td>
               <button class="btn-small" style="background: #28a745;" onclick="window.approveRental('${r._id}')">Approve</button>
+              <button class="btn-small btn-delete" onclick="window.rejectRental('${r._id}')">Unapprove</button>
             </td>
           </tr>
         `).join("")
@@ -216,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <td style="font-family: monospace; color: #ffd700;">${r.extensionTransactionId}</td>
             <td>
               <button class="btn-small" style="background: #28a745;" onclick="window.approveExtension('${r._id}')">Approve</button>
+              <button class="btn-small btn-delete" onclick="window.rejectExtension('${r._id}')">Unapprove</button>
             </td>
           </tr>
         `).join("")
@@ -260,6 +262,42 @@ document.addEventListener("DOMContentLoaded", () => {
       loadRentals();
     } catch (err) {
       console.error("Error approving rental:", err);
+    }
+  };
+
+  /* ===============================
+      ❌ REJECT RENTAL
+  =============================== */
+  window.rejectRental = async function (id) {
+    if (!confirm("Reject this rental request?")) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/rentals/reject/${id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Rental Rejected.");
+      loadRentals();
+    } catch (err) {
+      console.error("Error rejecting rental:", err);
+    }
+  };
+
+  /* ===============================
+      ❌ REJECT EXTENSION
+  =============================== */
+  window.rejectExtension = async function (id) {
+    if (!confirm("Reject this extension request?")) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/rentals/reject-extension/${id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Extension Rejected.");
+      loadExtensions();
+    } catch (err) {
+      console.error("Error rejecting extension:", err);
     }
   };
 
