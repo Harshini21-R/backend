@@ -254,11 +254,17 @@ router.put("/reject/:id", authMiddleware, async (req, res) => {
                 text: `Dear ${rental.userId.name},\n\nYour rental request for the book has been rejected due to invalid payment details or other issues.\n\nPlease check your dashboard and try again with correct details.\n\nRegards,\nReadify Team`
             };
 
+            // Debug logs for email
+            console.log("Attempting to send email...");
+            console.log("EMAIL_USER set:", !!process.env.EMAIL_USER);
+            console.log("EMAIL_PASS set:", !!process.env.EMAIL_PASS);
+            console.log("Recipient:", rental.userId.email);
+
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    console.log("Error sending email:", error);
+                    console.error("❌ Error sending email:", error);
                 } else {
-                    console.log("Email sent: " + info.response);
+                    console.log("✅ Email sent successfully: " + info.response);
                 }
             });
         }
