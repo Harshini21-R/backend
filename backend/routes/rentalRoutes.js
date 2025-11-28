@@ -246,6 +246,7 @@ router.put("/reject/:id", authMiddleware, async (req, res) => {
         await rental.save();
 
         // Send Rejection Email
+        // Send Rejection Email
         if (rental.userId && rental.userId.email) {
             const mailOptions = {
                 from: process.env.EMAIL_USER,
@@ -260,13 +261,13 @@ router.put("/reject/:id", authMiddleware, async (req, res) => {
             console.log("EMAIL_PASS set:", !!process.env.EMAIL_PASS);
             console.log("Recipient:", rental.userId.email);
 
-            transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                    console.error("❌ Error sending email:", error);
-                } else {
-                    console.log("✅ Email sent successfully: " + info.response);
-                }
-            });
+            try {
+                const info = await transporter.sendMail(mailOptions);
+                console.log("✅ Email sent successfully: " + info.response);
+            } catch (emailError) {
+                console.error("❌ Error sending email:", emailError);
+                // We don't want to fail the request if email fails, but we should log it
+            }
         }
 
         res.json({ message: "Rental rejected and email sent", rental });
