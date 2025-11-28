@@ -215,7 +215,6 @@
 
         // Handle rejected rentals - show message once then delete
         const rejectedRentalsList = myRentals.filter(r => r.status === 'rejected');
-        const rejectedRentals = new Set(rejectedRentalsList.map(r => r.bookId._id));
 
         // Delete rejected rentals in background after showing them
         if (rejectedRentalsList.length > 0) {
@@ -235,8 +234,6 @@
                 actionBtn = `<button onclick="window.openReader('${b._id}')">Read (Rented)</button>`;
               } else if (pendingRentals.has(b._id)) {
                 actionBtn = `<button disabled style="background: #ffa500; cursor: not-allowed;">Pending Approval</button>`;
-              } else if (rejectedRentals.has(b._id)) {
-                actionBtn = `<button onclick="alert('Your rental request was rejected. Please check your payment details.');" style="background: #ff4b4b; cursor: help;">Request Rejected</button>`;
               } else if (b.isRentable) {
                 actionBtn = `<button onclick="window.openRentModal('${b._id}', '${b.title}', ${b.rentPrice})">Rent @ ₹${b.rentPrice}/hr</button>`;
               } else {
@@ -457,7 +454,7 @@
           ? continueBooks.slice(0, 3).map(h => {
             const progress = h.totalPages > 0 ? Math.round((h.currentPage / h.totalPages) * 100) : 0;
             return `
-          <div class="continue-card">
+            <div class="continue-card">
             <div class="continue-info">
               <h3>${h.bookId.title}</h3>
               <p>Last read: ${new Date(h.date).toLocaleDateString()}</p>
@@ -468,14 +465,14 @@
             </div>
             <button class="continue-btn" onclick="window.openReader('${h.bookId._id}')">Resume</button>
           </div>
-          `;
+              `;
           }).join("")
           : "<p style='color: #888;'>No books in progress.</p>";
 
         // Render Completed Books
         completedList.innerHTML = completedBooks.length
           ? completedBooks.map(h => `
-          <div class="continue-card" style="border-color: var(--secondary-neon);">
+              <div class="continue-card" style="border-color: var(--secondary-neon);">
             <div class="continue-info">
               <h3>${h.bookId.title}</h3>
               <p>Finished on: ${new Date(h.date).toLocaleDateString()}</p>

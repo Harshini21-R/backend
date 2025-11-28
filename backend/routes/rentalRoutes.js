@@ -223,10 +223,19 @@ router.put("/reject-extension/:id", authMiddleware, async (req, res) => {
     }
 });
 
+// Email Transporter
+const transporter = require("nodemailer").createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
 // 8.6️⃣ Reject Rental (Admin)
 router.put("/reject/:id", authMiddleware, async (req, res) => {
     try {
-        const rental = await Rental.findById(req.params.id);
+        const rental = await Rental.findById(req.params.id).populate("userId");
         if (!rental) return res.status(404).json({ error: "Rental not found" });
 
         if (rental.status !== "pending") {
@@ -235,7 +244,26 @@ router.put("/reject/:id", authMiddleware, async (req, res) => {
 
         rental.status = "rejected";
         await rental.save();
-        res.json({ message: "Rental rejected", rental });
+
+        // Send Rejection Email
+        if (rental.userId && rental.userId.email) {
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: rental.userId.email,
+                subject: "Rental Request Rejected - Readify",
+                text: `Dear ${rental.userId.name},\n\nYour rental request for the book has been rejected due to invalid payment details or other issues.\n\nPlease check your dashboard and try again with correct details.\n\nRegards,\nReadify Team`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.log("Error sending email:", error);
+                } else {
+                    console.log("Email sent: " + info.response);
+                }
+            });
+        }
+
+        res.json({ message: "Rental rejected and email sent", rental });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
