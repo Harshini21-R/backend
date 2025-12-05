@@ -70,24 +70,41 @@ app.use(
   })
 );
 
-// Safely load email service
+// --- Email service loader (robust & safe) ---
 let sendEmail = null;
 try {
   const emailModule = require("./utils/emailService");
-  if (emailModule.init) {
-    emailModule.init();
+
+  // Call init() if provided (best-effort). init() should log readiness.
+  if (emailModule && typeof emailModule.init === "function") {
+    try {
+      emailModule.init();
+    } catch (initErr) {
+      console.warn("⚠️ emailService.init() threw:", initErr && initErr.message);
+    }
   }
-  sendEmail = emailModule.sendEmail;
-  if (typeof sendEmail !== "function") {
-    console.warn("⚠️ emailService loaded but does not export a function. Email endpoints disabled.");
-    sendEmail = null;
+
+  // Resolve sendEmail export for common module shapes
+  if (typeof emailModule === "function") {
+    sendEmail = emailModule;
+  } else if (emailModule && typeof emailModule.sendEmail === "function") {
+    sendEmail = emailModule.sendEmail;
+  } else if (emailModule && typeof emailModule.default === "function") {
+    sendEmail = emailModule.default;
   } else {
+    sendEmail = null;
+  }
+
+  if (sendEmail) {
     console.log("✅ emailService loaded");
+  } else {
+    console.warn("⚠️ emailService loaded but sendEmail() not found. Email endpoints disabled.");
   }
 } catch (err) {
-  console.warn("⚠️ Could not load backend/utils/emailService.js. Email endpoints disabled.", err.message);
+  console.warn("⚠️ Could not load ./utils/emailService.js. Email endpoints disabled.", err && err.message);
   sendEmail = null;
 }
+// --- end email loader ---
 
 // ---------- Basic & Debug Routes ----------
 app.get("/api/test", (req, res) => {
@@ -157,7 +174,14 @@ app.post("/debug/send-test-email", async (req, res) => {
     "your-test-email@example.com";
 
   try {
-    const result = await require("./utils/emailService").sendEmail({
+    // require the module again to ensure we call the module's current implementation
+    const emailModule = require("./utils/emailService");
+    const send = (typeof emailModule === "function") ? emailModule : (emailModule && emailModule.sendEmail);
+    if (!send) {
+      return res.status(501).json({ ok: false, error: "Email service not configured on this deployment." });
+    }
+
+    const result = await send({
       to,
       subject: "Brevo Email Test (Production)",
       text: "If you get this email, Brevo API is working from Render.",
@@ -165,7 +189,8 @@ app.post("/debug/send-test-email", async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Debug send error:", err);
+    res.status(500).json({ error: err.message || String(err) });
   }
 });
 
