@@ -1,121 +1,160 @@
 // server.js
-// Minimal, robust Express server configured for Render (binds to process.env.PORT).
-// Includes MongoDB connection, basic routes, graceful shutdown, and safe email-service usage.
+// Clean, fixed Express server for Render. Binds to process.env.PORT and host 0.0.0.0.
+// Uses connectDB() from ./db (keeps DB logic centralized), safe email loader,
+// single app.listen, graceful shutdown, and clear routes.
 
 require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
 const morgan = require("morgan");
+const path = require("path");
+const connectDB = require("./db");
+
+// Import Routes (adjust paths if your project layout differs)
+const authRoutes = require("./routes/authRoutes");
+const bookRoutes = require("./routes/bookRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const ratingRoutes = require("./routes/ratingRoutes");
+const historyRoutes = require("./routes/historyRoutes");
+const rentalRoutes = require("./routes/rentalRoutes");
 
 const app = express();
 
+// Connect to MongoDB (connectDB should handle connection and errors)
+connectDB();
+
 // Middlewares
-app.use(express.json());
+app.use(helmet());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 app.use(morgan("tiny"));
 
-// Try to load email service but don't crash if it's missing or broken
-let sendEmail;
+// CORS configuration (only set once)
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5500",
+  "http://localhost:8000",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:8000",
+  "https://yashwanthrajks1rvu23bsc180-readify-3.onrender.com",
+];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
+// Static folder for PDFs
+app.use(
+  "/pdfs",
+  express.static(path.join(__dirname, "uploads/pdfs"), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".pdf")) {
+        res.setHeader("Content-Type", "application/pdf");
+      }
+    },
+  })
+);
+
+// Safely load email service (won't crash server if file/export is wrong)
+let sendEmail = null;
 try {
-  // adjust path if your file lives elsewhere
-  sendEmail = require("./backend/utils/emailService");
-  if (sendEmail && typeof sendEmail !== "function") {
-    // if the module exports an object, try common export shapes
-    sendEmail = sendEmail.sendEmail || sendEmail.default || sendEmail;
-  }
+  const emailModule = require("./backend/utils/emailService");
+  sendEmail = typeof emailModule === "function" ? emailModule : (emailModule && (emailModule.sendEmail || emailModule.default));
   if (typeof sendEmail !== "function") {
-    console.warn(
-      "⚠️ emailService loaded but does not export a function. Email endpoints will be disabled."
-    );
+    console.warn("⚠️ emailService loaded but does not export a function. Email endpoints disabled.");
     sendEmail = null;
   } else {
     console.log("✅ emailService loaded");
   }
 } catch (err) {
-  console.warn(
-    "⚠️ Could not load backend/utils/emailService.js. Email endpoints will be disabled.",
-    err.message
-  );
+  console.warn("⚠️ Could not load backend/utils/emailService.js. Email endpoints disabled.", err.message);
   sendEmail = null;
 }
 
-// Basic routes
-app.get("/", (req, res) => {
+// ---------- Basic & Debug Routes ----------
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Backend working!" });
+});
+
+app.get("/api/debug-env", (req, res) => {
   res.json({
-    status: "ok",
-    name: process.env.npm_package_name || "my-app",
-    uptime: process.uptime(),
+    EMAIL_USER_SET: !!process.env.EMAIL_USER,
+    CLIENT_ID_SET: !!process.env.CLIENT_ID,
+    REFRESH_TOKEN_SET: !!process.env.REFRESH_TOKEN,
+    MONGO_URI_SET: !!(process.env.MONGO_URI || process.env.DATABASE_URL),
   });
 });
 
-// Health endpoint (useful for Render and load balancers)
+// Health endpoint
 app.get("/health", (req, res) => {
-  const mongoState = mongoose.connection.readyState; // 0 disconnected, 1 connected, 2 connecting, 3 disconnecting
+  const mongoState = mongoose.connection.readyState; // 0 disconnected, 1 connected...
   res.status(mongoState === 1 ? 200 : 503).json({
     status: mongoState === 1 ? "ok" : "degraded",
     mongoState,
   });
 });
 
-// Test email endpoint (safe: won't crash if email service is missing)
+// ---------- API Routes ----------
+app.use("/api/auth", authRoutes);
+app.use("/api/books", bookRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/ratings", ratingRoutes);
+app.use("/api/history", historyRoutes);
+app.use("/api/rentals", rentalRoutes);
+
+// Backend home (simple)
+app.get("/", (req, res) => {
+  res.json({
+    ok: true,
+    message: "📚 Readify Backend is running!",
+    version: "v1.0.0",
+  });
+});
+
+// Send test email route (safe: returns 501 if email service not available)
 app.post("/send-test-email", async (req, res) => {
   if (!sendEmail) {
-    return res
-      .status(501)
-      .json({ error: "Email service not available on this deployment." });
+    return res.status(501).json({ error: "Email service not available on this deployment." });
   }
 
   const { to, subject, text, html } = req.body || {};
   if (!to || (!text && !html)) {
-    return res
-      .status(400)
-      .json({ error: "Missing required fields: to and (text or html)." });
+    return res.status(400).json({ error: "Missing required fields: to and (text or html)." });
   }
 
   try {
     const result = await sendEmail({ to, subject: subject || "Test", text, html });
-    // result shape depends on implementation; don't assume too much
     res.json({ ok: true, result });
   } catch (err) {
     console.error("Error sending test email:", err);
-    res.status(500).json({ error: "Failed to send email", details: err.message });
+    res.status(500).json({ error: "Failed to send email", details: err.message || err });
   }
 });
 
-// Global error handler
+// ---------- Error Handler ----------
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({ error: "Internal Server Error" });
+  console.error("❌ Unhandled error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Server Error",
+  });
 });
 
-// MongoDB connection
-const MONGO_URI = process.env.MONGO_URI || process.env.DATABASE_URL || null;
-
-async function connectMongo() {
-  if (!MONGO_URI) {
-    console.warn("⚠️ No MONGO_URI provided. Skipping MongoDB connection.");
-    return;
-  }
-  try {
-    // use recommended options
-    await mongoose.connect(MONGO_URI, {
-      // options as needed by your mongoose version
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("✅ MongoDB connected successfully");
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-    // Do not exit process here; keep server up so Render can show logs.
-  }
-}
-
-connectMongo();
-
-// Start server listening on Render's assigned port
+// ---------- Start Server (single app.listen) ----------
 const PORT = parseInt(process.env.PORT, 10) || 5000;
 const HOST = process.env.HOST || "0.0.0.0";
 
@@ -123,16 +162,17 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on port ${PORT} (host ${HOST})`);
 });
 
-// Graceful shutdown
+// ---------- Graceful shutdown ----------
 async function shutdown(signal) {
   console.log(`\n🛑 Received ${signal}. Shutting down gracefully...`);
   try {
-    if (server) server.close();
+    if (server) {
+      server.close(() => console.log("HTTP server closed"));
+    }
     if (mongoose && mongoose.connection.readyState === 1) {
       await mongoose.disconnect();
       console.log("✅ MongoDB disconnected");
     }
-    // allow logs to flush
     setTimeout(() => process.exit(0), 300);
   } catch (err) {
     console.error("Error during shutdown:", err);
@@ -143,5 +183,5 @@ async function shutdown(signal) {
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
-// Export app for testing (optional)
+// Export app for tests
 module.exports = app;
