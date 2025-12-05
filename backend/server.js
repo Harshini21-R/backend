@@ -70,11 +70,14 @@ app.use(
   })
 );
 
-// Safely load email service (won't crash server if file/export is wrong)
+// Safely load email service
 let sendEmail = null;
 try {
   const emailModule = require("./utils/emailService");
-  sendEmail = typeof emailModule === "function" ? emailModule : (emailModule && (emailModule.sendEmail || emailModule.default));
+  if (emailModule.init) {
+    emailModule.init();
+  }
+  sendEmail = emailModule.sendEmail;
   if (typeof sendEmail !== "function") {
     console.warn("⚠️ emailService loaded but does not export a function. Email endpoints disabled.");
     sendEmail = null;
@@ -143,6 +146,26 @@ app.post("/send-test-email", async (req, res) => {
   } catch (err) {
     console.error("Error sending test email:", err);
     res.status(500).json({ error: "Failed to send email", details: err.message || err });
+  }
+});
+
+// DEBUG ROUTE (Brevo)
+app.post("/debug/send-test-email", async (req, res) => {
+  const to =
+    req.body.to ||
+    process.env.DEBUG_TEST_EMAIL ||
+    "your-test-email@example.com";
+
+  try {
+    const result = await require("./utils/emailService").sendEmail({
+      to,
+      subject: "Brevo Email Test (Production)",
+      text: "If you get this email, Brevo API is working from Render.",
+      html: "<p>If you get this email, <strong>Brevo API</strong> is working from Render.</p>",
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
