@@ -8,16 +8,19 @@ const nodemailer = require("nodemailer");
 // Email Transporter (Explicit Config for Production)
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // true for 465, false for other ports
+    port: 465, // Try Port 465 (SSL) instead of 587
+    secure: true, // true for 465
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
     tls: {
-        rejectUnauthorized: false // Helps with some cloud SSL issues
+        rejectUnauthorized: false
     },
-    connectionTimeout: 10000, // 10 seconds
+    family: 4, // Force IPv4 (Fixes some Render/Node timeouts)
+    connectionTimeout: 20000, // Increase to 20 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 20000
 });
 
 // Verify connection on startup
