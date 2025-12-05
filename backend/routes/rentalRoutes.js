@@ -23,9 +23,13 @@ router.post("/test-email", authMiddleware, async (req, res) => {
             subject: "Readify Production Email Test",
             text: `This is a test email from your Render production server.\n\nSender: ${process.env.EMAIL_USER}\nRecipient: ${req.user.email}\n\nIf you received this, your email configuration is PERFECT! 🚀`
         });
-        console.log("✅ Test email sent:", info.response);
-
-        res.json({ success: true, message: "Email sent successfully!", response: info.response });
+        if (info) {
+            console.log("✅ Test email sent:", info.response);
+            res.json({ success: true, message: "Email sent successfully!", response: info.response });
+        } else {
+            console.warn("⚠️ Email sent but no info returned");
+            res.json({ success: true, message: "Email sent (no info)", response: "No details" });
+        }
     } catch (err) {
         console.error("❌ Test email failed:", err);
         res.status(500).json({ success: false, error: err.message, stack: err.stack });
@@ -310,7 +314,11 @@ router.put("/reject/:id", authMiddleware, async (req, res) => {
                     subject: "Rental Request Rejected - Readify",
                     text: `Dear ${rental.userId.name},\n\nYour rental request for the book has been rejected due to invalid payment details or other issues.\n\nPlease check your dashboard and try again with correct details.\n\nRegards,\nReadify Team`
                 });
-                console.log("✅ Email sent successfully: " + info.response);
+                if (info) {
+                    console.log("✅ Email sent successfully: " + info.response);
+                } else {
+                    console.log("⚠️ Email sent but no info returned.");
+                }
             } catch (emailError) {
                 console.error("❌ Error sending email:", emailError);
                 // We don't want to fail the request if email fails, but we should log it

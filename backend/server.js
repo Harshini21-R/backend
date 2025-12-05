@@ -73,7 +73,7 @@ app.use(
 // Safely load email service (won't crash server if file/export is wrong)
 let sendEmail = null;
 try {
-  const emailModule = require("./backend/utils/emailService");
+  const emailModule = require("./utils/emailService");
   sendEmail = typeof emailModule === "function" ? emailModule : (emailModule && (emailModule.sendEmail || emailModule.default));
   if (typeof sendEmail !== "function") {
     console.warn("⚠️ emailService loaded but does not export a function. Email endpoints disabled.");

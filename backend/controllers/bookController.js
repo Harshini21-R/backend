@@ -62,7 +62,7 @@ exports.createBook = async (req, res, next) => {
         await sendEmail({
           to: recipientEmails,
           subject: '📚 New Book Added to Readify!',
-          text: `Hello!\n\nA new book titled "${book.title}" by ${book.author} has just been added to our library.\n\nCheck it out at Readify!\n\nBest regards,\nThe Readify Team`
+          text: `Hello!\n\nA new book titled "${book.title}" by ${Array.isArray(book.authors) ? book.authors.join(", ") : (book.author || "Unknown Author")} has just been added to our library.\n\nCheck it out at Readify!\n\nBest regards,\nThe Readify Team`
         });
         console.log('Notification emails sent successfully!');
       }
