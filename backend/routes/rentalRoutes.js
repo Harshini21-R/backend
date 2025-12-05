@@ -5,13 +5,28 @@ const Book = require("../models/Book");
 const authMiddleware = require("../middleware/authMiddleware");
 const nodemailer = require("nodemailer");
 
-// Email Transporter
+// Email Transporter (Explicit Config for Production)
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // true for 465, false for other ports
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+    tls: {
+        rejectUnauthorized: false // Helps with some cloud SSL issues
+    },
+    connectionTimeout: 10000, // 10 seconds
+});
+
+// Verify connection on startup
+transporter.verify(function (error, success) {
+    if (error) {
+        console.log("❌ SMTP Connection Error:", error);
+    } else {
+        console.log("✅ SMTP Server is ready to take our messages");
+    }
 });
 
 // 0️⃣ Test Email Configuration (Admin)
