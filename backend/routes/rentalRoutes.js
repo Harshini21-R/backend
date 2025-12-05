@@ -3,6 +3,16 @@ const router = express.Router();
 const Rental = require("../models/Rental");
 const Book = require("../models/Book");
 const authMiddleware = require("../middleware/authMiddleware");
+const nodemailer = require("nodemailer");
+
+// Email Transporter
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
 
 // 1️⃣ Create Rental Request (User)
 router.post("/request", authMiddleware, async (req, res) => {
@@ -93,7 +103,7 @@ router.get("/active", authMiddleware, async (req, res) => {
 // 4️⃣ Approve Rental (Admin)
 router.put("/approve/:id", authMiddleware, async (req, res) => {
     try {
-        const rental = await Rental.findById(req.params.id);
+        const rental = await Rental.findById(req.params.id).populate("userId").populate("bookId");
         if (!rental) return res.status(404).json({ error: "Rental not found" });
 
         rental.status = "active";
@@ -102,6 +112,24 @@ router.put("/approve/:id", authMiddleware, async (req, res) => {
         rental.endTime = new Date(rental.startTime.getTime() + rental.hours * 60 * 60 * 1000);
 
         await rental.save();
+
+        // Send Approval Email
+        if (rental.userId && rental.userId.email) {
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: rental.userId.email,
+                subject: "Rental Request Approved - Readify",
+                text: `Dear ${rental.userId.name},\n\nYour rental request for the book "${rental.bookId.title}" has been APPROVED!\n\nStart Time: ${rental.startTime.toLocaleString()}\nEnd Time: ${rental.endTime.toLocaleString()}\n\nEnjoy reading!\n\nRegards,\nReadify Team`
+            };
+
+            try {
+                await transporter.sendMail(mailOptions);
+                console.log(`✅ Approval email sent to ${rental.userId.email}`);
+            } catch (emailError) {
+                console.error("❌ Error sending approval email:", emailError);
+            }
+        }
+
         res.json(rental);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -223,14 +251,7 @@ router.put("/reject-extension/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// Email Transporter
-const transporter = require("nodemailer").createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+
 
 // 8.6️⃣ Reject Rental (Admin)
 router.put("/reject/:id", authMiddleware, async (req, res) => {
