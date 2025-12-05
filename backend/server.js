@@ -62,6 +62,15 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Backend working!" });
 });
 
+// ---------- DEBUG ENV ROUTE (REMOVE LATER) ----------
+app.get("/api/debug-env", (req, res) => {
+  res.json({
+    EMAIL_USER_SET: !!process.env.EMAIL_USER,
+    EMAIL_PASS_SET: !!process.env.EMAIL_PASS,
+    EMAIL_USER_VALUE: process.env.EMAIL_USER ? process.env.EMAIL_USER.substring(0, 3) + "***" : "NOT SET"
+  });
+});
+
 // ---------- API ROUTES ----------
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
