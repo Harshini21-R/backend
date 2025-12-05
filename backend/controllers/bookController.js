@@ -1,15 +1,8 @@
 const Book = require('../models/Book');
 const User = require('../models/User');
-const nodemailer = require('nodemailer');
+const { sendEmail } = require('../utils/emailService');
 
-// Configure Nodemailer Transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+// Configure Nodemailer Transporter -> REMOVED (Moved to utils/emailService.js)
 
 // Return a flat array of books (not {books: [], total, ...}) for frontend compatibility
 exports.listBooks = async (req, res, next) => {
@@ -53,19 +46,24 @@ exports.createBook = async (req, res, next) => {
     await book.save();
 
     // --- Send Email Notification ---
+    // --- Send Email Notification ---
     try {
       const users = await User.find({}, 'email');
       const recipientEmails = users.map(user => user.email);
 
       if (recipientEmails.length > 0) {
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
+        // Send individually to avoid exposing all emails in "To" header if desired,
+        // or just pass the array if sendEmail handles it (nodemailer does).
+        // Let's send as BCC or loop? 
+        // Original code sent to all in 'to'. This exposes emails.
+        // But to keep behavior same, we pass the array.
+        // Wait, sendEmail wrapper takes { to, subject, text, html }.
+
+        await sendEmail({
           to: recipientEmails,
           subject: '📚 New Book Added to Readify!',
           text: `Hello!\n\nA new book titled "${book.title}" by ${book.author} has just been added to our library.\n\nCheck it out at Readify!\n\nBest regards,\nThe Readify Team`
-        };
-
-        await transporter.sendMail(mailOptions);
+        });
         console.log('Notification emails sent successfully!');
       }
     } catch (emailError) {

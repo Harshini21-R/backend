@@ -3,34 +3,9 @@ const router = express.Router();
 const Rental = require("../models/Rental");
 const Book = require("../models/Book");
 const authMiddleware = require("../middleware/authMiddleware");
-const nodemailer = require("nodemailer");
+const { sendEmail } = require("../utils/emailService");
 
-// Email Transporter (Explicit Config for Production)
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465, // Try Port 465 (SSL) instead of 587
-    secure: true, // true for 465
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-        rejectUnauthorized: false
-    },
-    family: 4, // Force IPv4 (Fixes some Render/Node timeouts)
-    connectionTimeout: 20000, // Increase to 20 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 20000
-});
-
-// Verify connection on startup
-transporter.verify(function (error, success) {
-    if (error) {
-        console.log("❌ SMTP Connection Error:", error);
-    } else {
-        console.log("✅ SMTP Server is ready to take our messages");
-    }
-});
+// Email Transporter -> REMOVED (Moved to utils/emailService.js)
 
 // 0️⃣ Test Email Configuration (Admin)
 router.post("/test-email", authMiddleware, async (req, res) => {
@@ -43,7 +18,11 @@ router.post("/test-email", authMiddleware, async (req, res) => {
         };
 
         console.log("📤 Sending test email to:", req.user.email);
-        const info = await transporter.sendMail(mailOptions);
+        const info = await sendEmail({
+            to: req.user.email,
+            subject: "Readify Production Email Test",
+            text: `This is a test email from your Render production server.\n\nSender: ${process.env.EMAIL_USER}\nRecipient: ${req.user.email}\n\nIf you received this, your email configuration is PERFECT! 🚀`
+        });
         console.log("✅ Test email sent:", info.response);
 
         res.json({ success: true, message: "Email sent successfully!", response: info.response });
@@ -162,7 +141,11 @@ router.put("/approve/:id", authMiddleware, async (req, res) => {
             };
 
             try {
-                await transporter.sendMail(mailOptions);
+                await sendEmail({
+                    to: rental.userId.email,
+                    subject: "Rental Request Approved - Readify",
+                    text: `Dear ${rental.userId.name},\n\nYour rental request for the book "${rental.bookId.title}" has been APPROVED!\n\nStart Time: ${rental.startTime.toLocaleString()}\nEnd Time: ${rental.endTime.toLocaleString()}\n\nEnjoy reading!\n\nRegards,\nReadify Team`
+                });
                 console.log(`✅ Approval email sent to ${rental.userId.email}`);
             } catch (emailError) {
                 console.error("❌ Error sending approval email:", emailError);
@@ -322,7 +305,11 @@ router.put("/reject/:id", authMiddleware, async (req, res) => {
             console.log("Recipient:", rental.userId.email);
 
             try {
-                const info = await transporter.sendMail(mailOptions);
+                const info = await sendEmail({
+                    to: rental.userId.email,
+                    subject: "Rental Request Rejected - Readify",
+                    text: `Dear ${rental.userId.name},\n\nYour rental request for the book has been rejected due to invalid payment details or other issues.\n\nPlease check your dashboard and try again with correct details.\n\nRegards,\nReadify Team`
+                });
                 console.log("✅ Email sent successfully: " + info.response);
             } catch (emailError) {
                 console.error("❌ Error sending email:", emailError);
