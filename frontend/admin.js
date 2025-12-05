@@ -425,6 +425,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /* ===============================
+      📧 TEST EMAIL CONFIG
+  =============================== */
+  window.testEmailConfig = async function () {
+    if (!confirm("Send a test email to yourself to check Render configuration?")) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/rentals/test-email`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("✅ SUCCESS: " + data.message);
+      } else {
+        alert("❌ FAILURE: " + data.error);
+        console.error("Email Error Details:", data);
+      }
+    } catch (err) {
+      console.error("Error testing email:", err);
+      alert("❌ Network/Server Error: " + err.message);
+    }
+  };
+
   /* ✅ INIT */
   loadBooks();
   loadRentals();

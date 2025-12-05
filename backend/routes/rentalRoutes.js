@@ -14,6 +14,27 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// 0️⃣ Test Email Configuration (Admin)
+router.post("/test-email", authMiddleware, async (req, res) => {
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: req.user.email, // Send to the admin triggering the test
+            subject: "Readify Production Email Test",
+            text: `This is a test email from your Render production server.\n\nSender: ${process.env.EMAIL_USER}\nRecipient: ${req.user.email}\n\nIf you received this, your email configuration is PERFECT! 🚀`
+        };
+
+        console.log("📤 Sending test email to:", req.user.email);
+        const info = await transporter.sendMail(mailOptions);
+        console.log("✅ Test email sent:", info.response);
+
+        res.json({ success: true, message: "Email sent successfully!", response: info.response });
+    } catch (err) {
+        console.error("❌ Test email failed:", err);
+        res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    }
+});
+
 // 1️⃣ Create Rental Request (User)
 router.post("/request", authMiddleware, async (req, res) => {
     try {
