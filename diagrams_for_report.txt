@@ -1,0 +1,164 @@
+
+================================================================================
+>>> COPY THE BELOW CODE FOR DBDIAGRAM.IO (Schema Diagram) <<<
+================================================================================
+
+// Readify Database Schema (DBML)
+// Copy this content into https://dbdiagram.io/d
+
+Table User {
+  _id ObjectId [pk]
+  name String [not null]
+  email String [unique, not null]
+  password String [not null]
+  role String [default: 'user', note: 'user or admin']
+  createdAt Date
+}
+
+Table Book {
+  _id ObjectId [pk]
+  title String [not null]
+  authors Array
+  description String
+  isbn String
+  coverUrl String
+  pdfUrl String
+  categories Array
+  publishedDate Date
+  averageRating Number [default: 0]
+  ratingsCount Number [default: 0]
+  isRentable Boolean [default: false]
+  rentPrice Number [default: 2, note: 'INR per hour']
+  createdAt Date
+}
+
+Table Rental {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > User._id]
+  bookId ObjectId [ref: > Book._id]
+  hours Number [not null]
+  totalCost Number [not null]
+  transactionId String [not null]
+  status String [default: 'pending', note: 'pending, active, rejected, expired']
+  
+  // Extension Fields
+  extensionStatus String [default: 'none', note: 'none, pending, rejected']
+  extensionHours Number
+  extensionCost Number
+  extensionTransactionId String
+  
+  startTime Date
+  endTime Date
+  createdAt Date
+  updatedAt Date
+}
+
+Table Review {
+  _id ObjectId [pk]
+  bookId ObjectId [ref: > Book._id]
+  user ObjectId [ref: > User._id]
+  comment String [not null]
+  createdAt Date
+  updatedAt Date
+}
+
+Table Rating {
+  _id ObjectId [pk]
+  user ObjectId [ref: > User._id]
+  book ObjectId [ref: > Book._id]
+  rating Number [not null, note: '1-5']
+  createdAt Date
+  updatedAt Date
+}
+
+Table History {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > User._id]
+  bookId ObjectId [ref: > Book._id]
+  currentPage Number [default: 1]
+  totalPages Number [default: 0]
+  isCompleted Boolean [default: false]
+  date Date
+  createdAt Date
+  updatedAt Date
+}
+
+// Relationships
+Ref: Rental.userId > User._id
+Ref: Rental.bookId > Book._id
+
+Ref: Review.user > User._id
+Ref: Review.bookId > Book._id
+
+Ref: Rating.user > User._id
+Ref: Rating.book > Book._id
+
+Ref: History.userId > User._id
+Ref: History.bookId > Book._id
+
+
+================================================================================
+>>> COPY THE BELOW CODE FOR PLANTUML.COM (UML Diagrams) <<<
+================================================================================
+
+@startuml
+!theme plain
+title Readify - User Rental Workflow
+
+actor User
+participant "Frontend (Dashboard)" as FE
+participant "API (Rental Routes)" as API
+database "MongoDB" as DB
+participant "Admin" as Admin
+participant "Email Service" as Email
+
+== Rental Request Phase ==
+
+User -> FE: Select Book & "Rent Now"
+FE -> FE: Show Cost Calculation (Hours * Price)
+User -> FE: Enter Hours & Transaction ID
+User -> FE: Click "Submit Request"
+
+FE -> API: POST /api/rentals (bookId, hours, transactionId)
+activate API
+API -> DB: Save Rental (Status: "pending")
+DB --> API: Rental Created
+API --> FE: 201 Created
+deactivate API
+
+FE -> User: Show "Rental Pending Approval"
+
+== Rental Approval Phase ==
+
+Admin -> FE: View Pending Rentals
+FE -> API: GET /api/rentals/pending
+API -> DB: Fetch Requests
+DB --> API: Return List
+API --> FE: Display Table
+
+Admin -> FE: Click "Approve"
+FE -> API: PUT /api/rentals/approve/:id
+activate API
+API -> DB: Update Status="active", Set Start/End Time
+DB --> API: Success
+
+API -> Email: Send "Approval Email" to User
+Email --> User: "Your Rental is Approved!"
+
+API --> FE: 200 OK
+deactivate API
+
+FE -> Admin: Show "Approved" Toast
+
+== Reading Phase ==
+
+User -> FE: Go to "My Rentals"
+FE -> API: GET /api/rentals/my-rentals
+API -> DB: Fetch Active Rentals
+DB --> API: Return List
+
+User -> FE: Click "Read PDF"
+FE -> FE: Open PDF Reader
+
+@enduml
+
