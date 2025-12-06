@@ -12,6 +12,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const path = require("path");
 const connectDB = require("./db");
+const { authLimiter, apiLimiter } = require("./middleware/rateLimiter");
 
 // Import Routes (adjust paths if your project layout differs)
 const authRoutes = require("./routes/authRoutes");
@@ -31,6 +32,13 @@ app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("tiny"));
+
+// Security: Sanitization
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+
+app.use(mongoSanitize()); // Data sanitization against NoSQL query injection
+app.use(xss()); // Data sanitization against XSS
 
 // CORS configuration (only set once)
 const allowedOrigins = [
@@ -130,12 +138,12 @@ app.get("/health", (req, res) => {
 });
 
 // ---------- API Routes ----------
-app.use("/api/auth", authRoutes);
-app.use("/api/books", bookRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/books", apiLimiter, bookRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/history", historyRoutes);
-app.use("/api/rentals", rentalRoutes);
+app.use("/api/rentals", apiLimiter, rentalRoutes);
 
 // Backend home (simple)
 app.get("/", (req, res) => {
