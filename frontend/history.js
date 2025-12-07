@@ -42,6 +42,7 @@ async function loadHistory() {
     });
 
     const history = await res.json();
+    console.log("📜 History Data Loaded:", history); // Debug log
 
     if (!res.ok) {
       document.getElementById("historyList").innerHTML =
@@ -55,7 +56,13 @@ async function loadHistory() {
         <div class="card">
           <h3>${h.bookId?.title || "Unknown Book"}</h3>
           <p>Read on: ${new Date(h.date).toLocaleString()}</p>
-          <button onclick="window.rateBook('${h.bookId?._id || ""}')">Rate</button>
+          
+          ${h.userRating ? `<p style="color: gold;">⭐ Your Rating: ${h.userRating}/5</p>` : ''}
+          ${h.userReview ? `<p style="font-style: italic;">" ${h.userReview} "</p>` : ''}
+          
+          <button onclick="window.rateBook('${h.bookId?._id || ""}')">
+            ${h.userRating ? "Update Rating/Review" : "Rate & Review"}
+          </button>
         </div>
       `
       ).join("")
@@ -69,7 +76,7 @@ async function loadHistory() {
 window.rateBook = function (bookId) {
   if (!bookId) return;
   localStorage.setItem("bookId", bookId);
-  window.location.href = "ratings.html";
+  window.location.href = "reader.html";
 }
 
 // Auto-load when history page opens

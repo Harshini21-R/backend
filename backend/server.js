@@ -14,7 +14,7 @@ const path = require("path");
 const connectDB = require("./db");
 const { authLimiter, apiLimiter } = require("./middleware/rateLimiter");
 
-// Import Routes (adjust paths if your project layout differs)
+// Import Routes
 const authRoutes = require("./routes/authRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
@@ -139,11 +139,17 @@ app.get("/health", (req, res) => {
 
 // ---------- API Routes ----------
 app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/users", authRoutes); // For profile endpoints
 app.use("/api/books", apiLimiter, bookRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/history", historyRoutes);
 app.use("/api/rentals", apiLimiter, rentalRoutes);
+app.use("/api/payments", require("./routes/paymentRoutes"));
+app.use("/api/wishlist", require("./routes/wishlistRoutes"));
+
+
+app.use("/api/admin-logs", require("./routes/adminLogRoutes"));
 
 // Backend home (simple)
 app.get("/", (req, res) => {

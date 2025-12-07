@@ -152,6 +152,24 @@
       </table>
     </div>
 
+
+
+    <!-- Admin Logs Section -->
+    <div class="admin-section">
+      <h2>📜 Admin Activity Logs</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Admin</th>
+            <th>Action</th>
+            <th>Description</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="adminLogsTable"></tbody>
+      </table>
+    </div>
+
     <!-- Add Book Section -->
     <div class="admin-section">
       <h2>➕ Add Book</h2>
@@ -161,6 +179,10 @@
         <input id="categories" placeholder="Categories (comma separated)" required />
         <textarea id="description" placeholder="Description"></textarea>
         <input id="pdfUrl" placeholder="PDF URL" required />
+        <!-- New Fields -->
+        <input id="language" placeholder="Language (optional)" />
+
+
         <button type="submit" class="btn">Add Book</button>
       </form>
     </div>

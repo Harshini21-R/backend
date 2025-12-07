@@ -21,13 +21,17 @@ const rentalSchema = new mongoose.Schema(
             enum: ["pending", "active", "rejected", "expired"],
             default: "pending",
         },
+        paymentStatus: { type: String, default: 'pending' },
+        lateFee: { type: Number, default: 0 },
 
         // Extension Request Fields
         extensionStatus: {
             type: String,
-            enum: ["none", "pending", "rejected"],
+            enum: ["none", "pending", "rejected", "approved"],
             default: "none"
         },
+        isExtended: { type: Boolean, default: false },
+        autoExpiry: { type: Boolean, default: true },
         extensionHours: { type: Number },
         extensionCost: { type: Number },
         extensionTransactionId: { type: String },

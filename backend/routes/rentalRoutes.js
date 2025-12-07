@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Rental = require("../models/Rental");
 const Book = require("../models/Book");
+const AdminLog = require("../models/AdminLog");
 const authMiddleware = require("../middleware/authMiddleware");
 const { sendEmail } = require("../utils/emailService");
 const validate = require("../middleware/validate");
@@ -69,6 +70,9 @@ router.get("/my-rentals", authMiddleware, asyncHandler(async (req, res) => {
         if (rental.status === 'active' && new Date(rental.endTime) < now) {
             rental.status = 'expired';
             await rental.save();
+            if (rental.bookId) {
+                await Book.findByIdAndUpdate(rental.bookId._id || rental.bookId, { $inc: { readCount: 1 } }).catch(console.error);
+            }
         }
     }
 
@@ -98,6 +102,9 @@ router.get("/active", authMiddleware, asyncHandler(async (req, res) => {
         if (new Date(rental.endTime) < now) {
             rental.status = "expired";
             await rental.save();
+            if (rental.bookId) {
+                await Book.findByIdAndUpdate(rental.bookId._id || rental.bookId, { $inc: { readCount: 1 } }).catch(console.error);
+            }
         } else {
             activeRentals.push(rental);
         }
@@ -120,6 +127,13 @@ router.put("/approve/:id", authMiddleware, validateId(), asyncHandler(async (req
     rental.endTime = new Date(rental.startTime.getTime() + rental.hours * 60 * 60 * 1000);
 
     await rental.save();
+
+    // 📝 Log Admin Action
+    await AdminLog.create({
+        adminId: req.user._id,
+        action: "APPROVE_RENTAL",
+        description: `Approved rental for book "${rental.bookId.title}" (User: ${rental.userId.email})`
+    });
 
     // Send Approval Email
     if (rental.userId && rental.userId.email) {
@@ -221,6 +235,14 @@ router.put("/approve-extension/:id", authMiddleware, validateId(), asyncHandler(
     rental.extensionTransactionId = "";
 
     await rental.save();
+
+    // 📝 Log Admin Action
+    await AdminLog.create({
+        adminId: req.user._id,
+        action: "APPROVE_EXTENSION",
+        description: `Approved extension for rental (Book ID: ${rental.bookId})`
+    });
+
     res.json(rental);
 }));
 
@@ -242,6 +264,14 @@ router.put("/reject-extension/:id", authMiddleware, validateId(), asyncHandler(a
     // We keep extensionHours/Cost/TransactionId to show what was rejected if needed
 
     await rental.save();
+
+    // 📝 Log Admin Action
+    await AdminLog.create({
+        adminId: req.user._id,
+        action: "REJECT_EXTENSION",
+        description: `Rejected extension for rental (ID: ${rental._id})`
+    });
+
     res.json({ message: "Extension rejected", rental });
 }));
 
@@ -260,6 +290,15 @@ router.put("/reject/:id", authMiddleware, validateId(), asyncHandler(async (req,
 
     rental.status = "rejected";
     await rental.save();
+
+    await rental.save();
+
+    // 📝 Log Admin Action
+    await AdminLog.create({
+        adminId: req.user._id,
+        action: "REJECT_RENTAL",
+        description: `Rejected rental request for book (ID: ${rental.bookId})`
+    });
 
     // Send Rejection Email
     if (rental.userId && rental.userId.email) {

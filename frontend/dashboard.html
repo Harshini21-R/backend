@@ -78,11 +78,11 @@
     <h1>📚 Readify Dashboard</h1>
 
     <nav>
-      <a href="reviews.html">Reviews</a>
-      <a href="ratings.html">Ratings</a>
+      <a href="wishlist.html">Wishlist</a>
+
       <a href="history.html">History</a>
       <a href="#" onclick="window.openMyRentals()">My Rentals</a>
-      <a href="#" onclick="window.openProfileModal()">Profile</a>
+      <a href="profile.html">Profile</a>
       <button id="logoutBtn" class="btn">Logout</button>
     </nav>
   </header>
@@ -244,10 +244,16 @@
             <div class="card">
               <h3>${b.title}</h3>
               <p>${b.authors?.length ? b.authors.join(", ") : "Unknown Author"}</p>
-              <p>${b.description || ""}</p>
-              <p>⭐ ${b.averageRating ? b.averageRating.toFixed(1) : "No ratings"
-                } (${b.ratingsCount || 0} ratings)</p>
-              ${actionBtn}
+              <div style="font-size: 0.8rem; color: #ccc; margin-bottom: 5px;">
+                <span>${b.language || 'English'}</span> • <span>${b.pageCount || '?'} Pages</span>
+              </div>
+              <p>${b.description ? b.description.substring(0, 80) + '...' : ""}</p>
+              <p>⭐ ${b.averageRating ? b.averageRating.toFixed(1) : "No ratings"} (${b.ratingsCount || 0})</p>
+              
+              <div style="margin-top: auto; display: flex; flex-direction: column; gap: 5px;">
+                ${actionBtn}
+                <button onclick="addToWishlist('${b._id}')" style="border-color: #bd00ff; color: #bd00ff;">❤️ Wishlist</button>
+              </div>
             </div>
           `;
             })
@@ -499,8 +505,37 @@
       window.location.href = "login.html";
     });
 
+    // 🆕 Add to Wishlist
+    window.addToWishlist = async function (bookId) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/wishlist`, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ bookId })
+        });
+        if (res.ok) {
+          alert("Added to Wishlist!");
+        } else {
+          alert("Already in Wishlist or Error");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     loadBooks();
     loadContinueReading();
+
+    // Check if redirected from Profile to open Rentals
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openRentals') === 'true') {
+      window.openMyRentals();
+      // Clean URL
+      window.history.replaceState({}, document.title, "dashboard.html");
+    }
   </script>
 </body>
 

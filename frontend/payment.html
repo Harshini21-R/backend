@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💳 Payment - Readify</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        .payment-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--glass-bg);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .amount-display {
+            font-size: 2.5rem;
+            color: var(--primary-neon);
+            margin: 20px 0;
+            font-weight: 700;
+            font-family: var(--font-serif);
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .method-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .method-card:hover,
+        .method-card.selected {
+            border-color: var(--primary-neon);
+            background: rgba(0, 242, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>📚 Readify Dashboard</h1>
+        <nav>
+            <a href="dashboard.html">Cancel Payment</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="dashboard-container">
+
+            <div class="payment-container">
+                <h2>💳 Complete Payment</h2>
+                <p>Rental for: <strong id="bookTitle">Loading...</strong></p>
+
+                <div class="amount-display">₹<span id="amount">0</span></div>
+
+                <div class="payment-methods">
+                    <div class="method-card selected" onclick="selectMethod('upi')">
+                        <h3>📲 UPI</h3>
+                        <p>GPay / PhonePe</p>
+                    </div>
+                    <div class="method-card" onclick="selectMethod('card')">
+                        <h3>💳 Card</h3>
+                        <p>Credit / Debit</p>
+                    </div>
+                </div>
+
+                <div id="upiSection">
+                    <img src="assets/payment_qr.jpg" alt="QR Code"
+                        style="width: 200px; border-radius: 10px; border: 2px solid #fff; margin-bottom: 20px;">
+                    <p>Scan to Pay</p>
+                </div>
+
+                <div class="input-group" style="text-align: left; margin-top: 20px;">
+                    <label>Transaction ID / UTR</label>
+                    <input type="text" id="transactionId" placeholder="e.g. 1234567890">
+                </div>
+
+                <button onclick="processPayment()" class="btn" style="width: 100%; margin-top: 20px;">Verify &
+                    Pay</button>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module" src="payment.js"></script>
+</body>
+
+</html>

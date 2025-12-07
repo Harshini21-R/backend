@@ -38,10 +38,15 @@ The platform is built with a **Security-First** architecture, incorporating adva
 ### 📧 **Hybrid Email System**
 - **Primary**: **Brevo API** (High deliverability).
 - **Fallback**: **Nodemailer** (Gmail SMTP / OAuth2).
-- **Notifications**:
+- **Alerts**:
     - New Book Alerts.
     - Rental Approvals/Rejections.
     - Extension Status Updates.
+
+### ⭐ **New Features**
+- **Wishlist**: Save books for later.
+- **Payment Gateway**: Integrated QR payment collection.
+- **Admin Logs**: Track administrative actions.
 
 ---
 
@@ -81,11 +86,15 @@ flowchart TD
 readify_final/
 ├── backend/
 │   ├── controllers/
+│   │   ├── adminLogController.js  # Admin Activity Logs
 │   │   ├── authController.js      # Register, Login logic
 │   │   ├── bookController.js      # Book CRUD (Create, Read, Update, Delete)
 │   │   ├── historyController.js   # User Reading History
+│   │   ├── paymentController.js   # Payment Processing
 │   │   ├── ratingController.js    # Book Rating logic
-│   │   └── reviewController.js    # User Reviews logic
+│   │   ├── rentalController.js    # Rental Logic
+│   │   ├── reviewController.js    # User Reviews logic
+│   │   └── wishlistController.js  # Wishlist Logic
 │   ├── middleware/
 │   │   ├── adminMiddleware.js     # Admin role verification
 │   │   ├── authMiddleware.js      # JWT Token verification
@@ -94,19 +103,25 @@ readify_final/
 │   │   ├── validate.js            # Joi Request Validation
 │   │   └── validateId.js          # MongoDB ObjectID Validation
 │   ├── models/
+│   │   ├── AdminLog.js            # Admin Activity Schema
 │   │   ├── Book.js                # Book Schema
 │   │   ├── History.js             # Reading History Schema
+│   │   ├── Payment.js             # Payment Schema
 │   │   ├── Rating.js              # Rating Schema
 │   │   ├── Rental.js              # Rental request/status Schema
 │   │   ├── Review.js              # Review Schema
-│   │   └── User.js                # User & Role Schema
+│   │   ├── User.js                # User & Role Schema
+│   │   └── Wishlist.js            # Wishlist Schema
 │   ├── routes/
+│   │   ├── adminLogRoutes.js      # /api/admin-logs
 │   │   ├── authRoutes.js          # /api/auth
 │   │   ├── bookRoutes.js          # /api/books
 │   │   ├── historyRoutes.js       # /api/history
+│   │   ├── paymentRoutes.js       # /api/payments
 │   │   ├── ratingRoutes.js        # /api/ratings
 │   │   ├── rentalRoutes.js        # /api/rentals
-│   │   └── reviewRoutes.js        # /api/reviews
+│   │   ├── reviewRoutes.js        # /api/reviews
+│   │   └── wishlistRoutes.js      # /api/wishlist
 │   ├── utils/
 │   │   ├── asyncHandler.js        # Wrapper for async routes (Try-Catch killer)
 │   │   ├── emailService.js        # Brevo/Nodemailer Hybrid Service
@@ -129,12 +144,16 @@ readify_final/
 │   ├── index.html                 # Landing Page
 │   ├── login.html                 # Login Page
 │   ├── login.js                   # Login Logic
-│   ├── ratings.html               # Ratings UI
+│   ├── payment.html               # Payment UI
+│   ├── payment.js                 # Payment Logic
+│   ├── profile.html               # Profile UI
+│   ├── profile.js                 # Profile Logic
 │   ├── reader.html                # PDF Reader UI
-│   ├── reviews.html               # Reviews UI
 │   ├── signup.html                # Signup Page
 │   ├── signup.js                  # Signup Logic
-│   └── style.css                  # Global Stylesheet
+│   ├── style.css                  # Global Stylesheet
+│   ├── wishlist.html              # Wishlist UI
+│   └── wishlist.js                # Wishlist Logic
 ```
 
 ---

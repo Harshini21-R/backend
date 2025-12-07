@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) return; // Skip if error, handled by loadBooks mostly
+      if (!res.ok) return;
 
       const rentals = await res.json();
       const pendingTable = document.getElementById("pendingRentalsTable");
@@ -127,6 +127,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error("Error loading rentals:", err);
+    }
+  }
+
+
+
+  /* ===============================
+      📜 LOAD ADMIN LOGS
+  =============================== */
+  async function loadAdminLogs() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin-logs`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const logs = await res.json();
+      const table = document.getElementById("adminLogsTable");
+      if (table) {
+        table.innerHTML = logs.map(l => `
+          <tr>
+            <td>${l.adminId ? l.adminId.name : "Admin"}</td>
+            <td>${l.action}</td>
+            <td>${l.description}</td>
+            <td>${new Date(l.createdAt).toLocaleString()}</td>
+          </tr>
+        `).join("");
+      }
+    } catch (err) {
+      console.error("Error loading logs", err);
     }
   }
 
@@ -314,13 +342,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const categories = document.getElementById("categories").value;
       const description = document.getElementById("description").value;
       const pdfUrl = document.getElementById("pdfUrl").value;
-
+      const language = document.getElementById("language").value;
       const body = {
         title: title,
         authors: authors.split(",").map((x) => x.trim()),
         categories: categories.split(",").map((x) => x.trim()),
         description: description,
         pdfUrl: pdfUrl,
+        language,
+        pageCount: 0
       };
 
       try {
@@ -456,9 +486,13 @@ document.addEventListener("DOMContentLoaded", () => {
   loadRentals();
   loadActiveRentals();
   loadExtensions();
+  loadCategories();
+  loadAdminLogs();
+
   setInterval(() => {
     loadRentals();
     loadActiveRentals();
     loadExtensions();
+    // loadAdminLogs(); // Optional background refresh
   }, 10000); // Auto-refresh requests every 10s
 });

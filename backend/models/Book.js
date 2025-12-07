@@ -14,7 +14,16 @@ const bookSchema = new mongoose.Schema({
   // 🆕 Rental Fields
   isRentable: { type: Boolean, default: false },
   rentPrice: { type: Number, default: 2 }, // Default 2 INR/hr
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+
+  // 🆕 Extra Details from Schema
+  language: { type: String },
+  pageCount: { type: Number },
+  fileSize: { type: Number },
+  readCount: { type: Number, default: 0 }
 });
+
+// ✅ Index for searching
+bookSchema.index({ title: 'text' });
 
 module.exports = mongoose.model('Book', bookSchema);

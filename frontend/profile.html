@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>👤 Profile - Readify</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        .profile-header {
+            background: var(--glass-bg);
+            padding: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            border: 1px solid var(--glass-border);
+        }
+
+
+
+        .profile-info h2 {
+            margin-bottom: 10px;
+            border: none;
+            padding: 0;
+        }
+
+        .profile-info p {
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        .section-card {
+            background: var(--glass-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>📚 Readify Dashboard</h1>
+        <nav>
+            <a href="dashboard.html">Home</a>
+            <a href="wishlist.html">Wishlist</a>
+            <a href="#" onclick="window.openMyRentals()">My Rentals</a>
+            <a href="profile.html" class="active" style="color: #fff; background: rgba(255,255,255,0.1);">Profile</a>
+            <button id="logoutBtn" class="btn">Logout</button>
+        </nav>
+    </header>
+
+    <main>
+        <div class="dashboard-container">
+
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <!-- Avatar removed -->
+                <div class="profile-info">
+                    <h2 id="userName">Loading...</h2>
+                    <p id="userEmail">Loading...</p>
+                    <p id="userRole" style="text-transform: capitalize; color: var(--secondary-neon);">User</p>
+                </div>
+            </div>
+
+            <!-- Stats Only -->
+            <div class="section-card" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 20px; color: #fff;">📊 My Stats</h3>
+                <div style="display: flex; gap: 40px;">
+                    <p>Books Read: <strong id="booksReadCount">0</strong></p>
+                    <p>Active Rentals: <strong id="activeRentalsCount">0</strong></p>
+                    <p>Membership Status: <strong style="color: var(--primary-neon);">Verified</strong></p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module" src="profile.js"></script>
+</body>
+
+</html>

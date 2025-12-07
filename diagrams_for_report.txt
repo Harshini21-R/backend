@@ -30,6 +30,12 @@ Table Book {
   isRentable Boolean [default: false]
   rentPrice Number [default: 2, note: 'INR per hour']
   createdAt Date
+  
+  // New Fields
+  language String
+  pageCount Number
+  fileSize Number
+  readCount Number [default: 0]
 }
 
 Table Rental {
@@ -51,6 +57,32 @@ Table Rental {
   endTime Date
   createdAt Date
   updatedAt Date
+}
+
+Table Payment {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > User._id]
+  rentalId ObjectId [ref: > Rental._id]
+  amount Number [not null]
+  transactionId String [not null]
+  paymentMethod String
+  status String [default: 'pending']
+  createdAt Date
+}
+
+Table Wishlist {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > User._id]
+  bookId ObjectId [ref: > Book._id]
+  createdAt Date
+}
+
+Table AdminLog {
+  _id ObjectId [pk]
+  adminId ObjectId [ref: > User._id]
+  action String [not null]
+  description String
+  createdAt Date
 }
 
 Table Review {
@@ -95,6 +127,14 @@ Ref: Rating.book > Book._id
 
 Ref: History.userId > User._id
 Ref: History.bookId > Book._id
+
+Ref: Payment.userId > User._id
+Ref: Payment.rentalId > Rental._id
+
+Ref: Wishlist.userId > User._id
+Ref: Wishlist.bookId > Book._id
+
+Ref: AdminLog.adminId > User._id
 
 
 ================================================================================

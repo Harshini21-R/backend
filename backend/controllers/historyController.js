@@ -50,7 +50,30 @@ exports.getMyHistory = async (req, res) => {
       .populate("bookId")
       .sort({ date: -1 });
 
-    return res.json(history);
+    // Fetch ratings and reviews for these books by this user
+    const historyWithExtras = await Promise.all(history.map(async (h) => {
+      // Convert mongoose doc to object to attach new properties
+      const hObj = h.toObject();
+
+      if (h.bookId) {
+        const rating = await require("../models/Rating").findOne({
+          user: req.user._id,
+          book: h.bookId._id
+        });
+
+        const review = await require("../models/Review").findOne({
+          user: req.user._id,
+          bookId: h.bookId._id
+        });
+
+        hObj.userRating = rating ? rating.rating : null;
+        hObj.userReview = review ? review.comment : null;
+      }
+
+      return hObj;
+    }));
+
+    return res.json(historyWithExtras);
   } catch (err) {
     console.error("❌ Get History Error:", err);
     return res.status(500).json({ error: err.message });
