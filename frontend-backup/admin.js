@@ -154,55 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "login.html";
   };
 
-  // Notification System
-  function notifyUser(message) {
-    alert(message); // Simple alert for notifications
-  }
-
-  // Payment Integration (example with Stripe)
-  async function processPayment(amount) {
-    const response = await fetch('/api/payment', {
-      method: 'POST',
-      body: JSON.stringify({ amount }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const data = await response.json();
-    notifyUser(data.message);
-  }
-
-  // Rent Book Functionality
-  async function rentBook(bookId) {
-    const response = await fetch(`/api/rent/${bookId}`, {
-      method: 'POST'
-    });
-    const data = await response.json();
-    notifyUser(data.message);
-  }
-
-  // Admin to User Review
-  async function respondToReview(reviewId, response) {
-    const response = await fetch(`/api/reviews/${reviewId}/respond`, {
-      method: 'POST',
-      body: JSON.stringify({ response }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const data = await response.json();
-    notifyUser(data.message);
-  }
-
-  // Kindle Upload Option
-  async function uploadKindleBook(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await fetch('/api/upload/kindle', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await response.json();
-    notifyUser(data.message);
-  }
-
   /* ✅ INIT */
   loadBooks();
 });
