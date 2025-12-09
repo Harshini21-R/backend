@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reader - Readify</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <!-- ✅ NEW CLEAN UI STYLE FOR RATING + REVIEW -->
+  <style>
+    .rating-review-container {
+      width: 90%;
+      margin: 25px auto 60px;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(8px);
+      border-radius: 14px;
+      padding: 25px;
+      text-align: center;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .rating-section, .review-section {
+      margin-top: 25px;
+    }
+
+    .rating-input {
+      width: 70px;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    textarea {
+      width: 60%;
+      min-height: 120px;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      resize: vertical;
+    }
+
+    .reader-btn {
+      margin-top: 12px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(to right, #009ffd, #2a2a72);
+      color: white;
+      transition: 0.3s;
+    }
+
+    .reader-btn:hover {
+      transform: scale(1.08);
+      background: linear-gradient(to right, #2a2a72, #009ffd);
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    hr {
+      border: none;
+      margin: 25px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="reader-header">
+    <h1>📖 Reader</h1>
+    <button onclick="window.location.href='dashboard.html'" class="btn back-btn">⬅ Back</button>
+  </header>
+
+  <main class="reader-main">
+
+    <!-- ✅ PDF SECTION -->
+    <div class="controls">
+      <button id="prevBtn" class="btn nav-btn">Previous</button>
+      <button id="nextBtn" class="btn nav-btn">Next</button>
+      <span id="pageNum" class="page-num"></span>
+    </div>
+
+    <div class="pdf-wrapper">
+      <canvas id="pdfViewer"></canvas>
+    </div>
+
+    <!-- ✅ RATING + REVIEW BOX -->
+    <div class="rating-review-container">
+
+      <!-- ⭐ RATING SECTION -->
+      <div class="rating-section">
+        <div class="section-title">⭐ Rate this Book</div>
+        <input id="ratingInput" class="rating-input" type="number" min="1" max="5" placeholder="1–5" />
+        <button class="reader-btn" onclick="submitRating()">Submit Rating</button>
+      </div>
+
+      <!-- ✍ REVIEW SECTION -->
+      <div class="review-section">
+        <div class="section-title">✍ Write a Review</div>
+        <textarea id="reviewInput" placeholder="Write your thoughts here..."></textarea>
+        <button class="reader-btn" onclick="submitReview()">Submit Review</button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const bookId = localStorage.getItem("bookId");
+
+    if (!token || !bookId) window.location.href = "dashboard.html";
+
+    let pdfDoc = null,
+      pageNum = 1,
+      pageRendering = false,
+      pageNumPending = null;
+
+    async function getPdfUrl() {
+      const res = await fetch(`http://localhost:5000/api/books/${bookId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const book = await res.json();
+
+      function getFilename(path) {
+        return path ? path.split("/").pop() : "";
+      }
+
+      return book.pdfUrl ? `http://localhost:5000/pdfs/${getFilename(book.pdfUrl)}` : "";
+    }
+
+    // ✅ MARK BOOK AS READ
+    async function markAsRead() {
+      await fetch("http://localhost:5000/api/history", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bookId }),
+      });
+    }
+
+    // ✅ SUBMIT RATING
+    async function submitRating() {
+      const rating = document.getElementById("ratingInput").value;
+
+      if (!rating) return alert("Enter rating");
+
+      const res = await fetch("http://localhost:5000/api/ratings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bookId, rating }),
+      });
+
+      if (res.ok) alert("✅ Rating submitted");
+      else alert("❌ Rating failed");
+    }
+
+    // ✅ SUBMIT REVIEW
+    async function submitReview() {
+      const comment = document.getElementById("reviewInput").value;
+
+      if (!comment) return alert("Enter review comment");
+
+      const res = await fetch("http://localhost:5000/api/reviews", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bookId, comment }),
+      });
+
+      if (res.ok) alert("✅ Review submitted");
+      else alert("❌ Review failed");
+    }
+
+    // ✅ PDF RENDERING
+    function renderPage(num) {
+      pageRendering = true;
+      pdfDoc.getPage(num).then(function (page) {
+        const viewport = page.getViewport({ scale: 1.1 });
+        const canvas = document.getElementById("pdfViewer");
+        const context = canvas.getContext("2d");
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderTask = page.render({ canvasContext: context, viewport });
+
+        renderTask.promise.then(function () {
+          pageRendering = false;
+          document.getElementById("pageNum").textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+
+          if (pageNumPending !== null) {
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+        });
+      });
+    }
+
+    function queueRenderPage(num) {
+      if (pageRendering) {
+        pageNumPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", function () {
+      if (pageNum <= 1) return;
+      pageNum--;
+      queueRenderPage(pageNum);
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", function () {
+      if (pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      queueRenderPage(pageNum);
+    });
+
+    getPdfUrl().then((url) => {
+      if (url) {
+        markAsRead();
+        pdfjsLib
+          .getDocument(url)
+          .promise.then(function (pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            pageNum = 1;
+            renderPage(pageNum);
+          })
+          .catch((err) => {
+            document.querySelector(".pdf-wrapper").innerHTML = `<p>PDF failed to load: ${err.message}</p>`;
+          });
+      } else {
+        document.querySelector(".pdf-wrapper").innerHTML = "<p>PDF not found</p>";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -10,7 +10,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value.trim();
 
   try {
+<<<<<<< HEAD
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
+=======
+    const res = await fetch('http://localhost:5000/api/auth/login', {
+>>>>>>> 9217fdf4a7266972e7ac08f654ca83dfe79151f9
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
