@@ -1,4 +1,7 @@
-import API_BASE_URL from "./config.js";
+// login.js (Frontend Folder)
+
+// FINAL FIX: Pointing to the stable local backend on port 5000
+const API_BASE_URL = "http://localhost:5000/api"; 
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -12,25 +15,21 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-
+    
     const data = await res.json();
 
     if (res.ok) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // 🔥 ROLE-BASED REDIRECTION
-      if (data.user.role === "admin") {
-        alert("Welcome Admin!");
-        window.location.href = "admin.html";
-      } else {
-        window.location.href = "dashboard.html";
+      if (data.token) {
+        localStorage.setItem('token', data.token);
       }
+      
+      alert('✅ Login successful! Redirecting to dashboard.');
+      window.location.href = 'dashboard.html'; 
     } else {
-      alert(`❌ ${data.message || 'Login failed'}`);
+      alert(`❌ Login failed: ${data.message || 'Check your email and password.'}`);
     }
   } catch (err) {
     console.error('Login error:', err);
-    alert('❌ Error connecting to server.');
+    alert('❌ Error connecting to server. Please ensure the backend is running on port 5000.'); 
   }
 });
